@@ -1,0 +1,61 @@
+# Hadolint configuration
+# MAXIMUM STRICTNESS - All options explicitly configured
+#
+# Philosophy:
+# - Every option explicitly set (no implicit defaults)
+# - Strictest practical settings
+# - Version pinning ignored with documented rationale
+# - No inline ignores permitted
+
+# Fail on warnings and above (stricter than default 'info')
+failure-threshold: warning
+
+# Trusted registries - restrict FROM sources
+trustedRegistries:
+  - docker.io
+
+# Required labels - enforce documentation
+label-schema:
+  maintainer: text
+  version: text
+
+# Prevent label sprawl
+strict-labels: false
+
+# CRITICAL: Prevent inline # hadolint ignore=xxx bypasses
+# All rule decisions must be centralized in this config file
+disable-ignore-pragma: true
+
+# Ignored rules with documented rationale
+# Each ignore MUST have explicit justification
+ignored:
+  # DL3008: Pin versions in apt-get install
+  # Rationale: apt package versions are distro-specific
+  # (e.g., curl=7.88.1-10+deb12u8) and break on base image updates.
+  # The base image (python:3.12-slim) provides security-patched packages.
+  # Pinning creates brittle builds that fail silently when upstream updates.
+  # Industry standard practice for slim images.
+  - DL3008
+
+  # DL3013: Pin versions in pip install
+  # Rationale: Python dependencies are precisely locked via uv.lock file.
+  # The only pip usage is for installing uv itself, which is a build tool
+  # that should track latest for security patches. Actual app dependencies
+  # are managed by uv sync --frozen.
+  - DL3013
+
+  # DL3018: Pin versions in apk add
+  # Rationale: Same as DL3008 - Alpine package versions are distro-specific
+  # and the base image provides security-patched packages. Only used for
+  # tini (PID 1 init), which should be latest for security.
+  - DL3018
+
+# Output format (default tty is fine for local dev)
+# CI will override to json via CLI
+format: tty
+
+# Colorized output
+no-color: false
+
+# Fail on violations (don't use no-fail)
+no-fail: false

@@ -1,0 +1,110 @@
+# Pre-commit hooks for code quality enforcement
+# Install: uv add --dev pre-commit
+#   && uv run pre-commit install --hook-type pre-commit --hook-type pre-push
+# Pre-push only: uv run pre-commit install --hook-type pre-push
+# Run (repo-wide baseline): uv run pre-commit run --all-files
+
+default_stages: [pre-commit, pre-push]
+
+repos:
+  - repo: local
+    hooks:
+      # === PHASE 1: FORMATTING ===
+      - id: ruff-format
+        name: ruff (format)
+        entry: uv run ruff format --force-exclude
+        language: system
+        types: [python]
+
+      # === PHASE 2: LINTING ===
+      - id: ruff-check
+        name: ruff (lint)
+        entry: uv run ruff check --fix --force-exclude
+        language: system
+        types: [python]
+
+      # === PHASE 2b: ASYNC LINTING ===
+      - id: flake8-async
+        name: flake8-async (async patterns)
+        entry: uv run flake8 --select=ASYNC
+        language: system
+        types: [python]
+        exclude: ^(tests/|scripts/|docs/)
+
+      # === PHASE 3: TYPE CHECKING ===
+      - id: ty-check
+        name: ty (types)
+        entry: uv run ty check
+        language: system
+        types: [python]
+        exclude: ^(scripts/|docs/|tests/)
+        require_serial: true
+
+  - repo: local
+    hooks:
+      # === PHASE 4: SHELL ===
+      - id: shellcheck
+        name: shellcheck
+        entry: mise exec -- shellcheck
+        language: system
+        types: [shell]
+
+      # === PHASE 5: YAML ===
+      - id: yamllint
+        name: yamllint
+        entry: uv run yamllint -c .yamllint
+        language: system
+        types: [yaml]
+
+      # === PHASE 6: JSON ===
+      - id: check-json
+        name: jaq (json syntax)
+        entry: mise exec -- jaq empty
+        language: system
+        types: [json]
+
+      # === PHASE 7: TOML ===
+      - id: taplo-lint
+        name: taplo (toml)
+        entry: mise exec -- taplo lint
+        language: system
+        types: [toml]
+
+      # === PHASE 8: DOCKERFILE ===
+      - id: hadolint
+        name: hadolint
+        entry: mise exec -- hadolint
+        language: system
+        files: (^|/)Dockerfile(\..*)?$|\.dockerfile$
+
+      # === PHASE 8a: GITHUB ACTIONS SCHEMA ===
+      - id: check-jsonschema-github-workflows
+        name: check-jsonschema (GitHub Workflows)
+        entry: uv run check-jsonschema --builtin-schema github-workflows
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+
+      # === PHASE 8b: ACTIONLINT ===
+      - id: actionlint
+        name: actionlint
+        entry: mise exec -- actionlint
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+
+      # === PHASE 10: DUPLICATES ===
+      - id: jscpd
+        name: jscpd (duplicates)
+        entry: mise exec -- npm run lint:duplicates --
+        language: system
+        files: \.(py|sh|yaml|yml|ts|tsx|js|jsx|mjs|cjs|css)$
+        pass_filenames: false
+        stages: [pre-commit]
+        verbose: true
+
+# === INTENTIONAL EXCLUSIONS ===
+# The following tools are useful in editor, agent, or CI workflows but NOT in pre-commit:
+# - markdownlint-cli2: pass_filenames=false causes it to scan gitignored docs/plans/
+#   (auto-generated reports that don't conform to style rules); removed to reduce noise
+# - vulture: High false positive rate, advisory-only (needs whitelist)
+# - bandit: Security scanning belongs in CI gates, not commit-time
+# - flake8-pydantic: Niche Pydantic feedback, real-time via CC hooks

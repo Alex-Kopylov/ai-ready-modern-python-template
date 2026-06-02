@@ -1,0 +1,139 @@
+[tools]
+python = "3.12"
+uv = "latest"
+node = "22.22.0"
+"aqua:01mf02/jaq" = "2.3.0"
+"aqua:hadolint/hadolint" = "2.14.0"
+"aqua:koalaman/shellcheck" = "0.11.0"
+"aqua:rhysd/actionlint" = "1.7.11"
+"aqua:tamasfe/taplo" = "0.10.0"
+
+[tasks.install]
+description = "Install project and development dependencies"
+run = [
+  "uv sync --all-extras",
+  "npm ci",
+]
+
+[tasks.lint]
+description = "Run all configured linters in parallel"
+run = [
+  { tasks = [
+    "lint-python",
+    "lint-dockerfile",
+    "lint-md",
+    "lint-yml",
+    "lint-json",
+    "lint-toml",
+    "lint-sh",
+    "lint-github-actions",
+    "lint-duplicates",
+  ] },
+]
+
+[tasks.lint-python]
+description = "Lint, format-check, type-check, and scan Python code"
+run = [
+  "uv run ruff check src tests",
+  "uv run ruff format --check src tests",
+  "uv run flake8 src",
+  "uv run ty check src",
+  "uv run bandit --ini .bandit -r src",
+  "uv run vulture --config .vulture.toml",
+]
+
+[tasks.lint-dockerfile]
+description = "Lint Dockerfiles with Hadolint"
+run = '''
+files=$(find . \( -path ./.venv -o -path ./build -o -path ./dist \) -prune -o \( -name 'Dockerfile' -o -name 'Dockerfile.*' -o -name '*.dockerfile' \) -print)
+if [ -z "$files" ]; then
+  echo "No Dockerfiles to lint"
+  exit 0
+fi
+for file in $files; do
+  hadolint "$file"
+done
+'''
+
+[tasks.lint-md]
+description = "Lint Markdown files"
+run = "npm run lint:md"
+
+[tasks.lint-yml]
+description = "Lint YAML files"
+run = "uv run yamllint -c .yamllint ."
+
+[tasks.lint-json]
+description = "Validate JSON syntax with jaq"
+run = '''
+find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist \) -prune -o -name '*.json' -print | while IFS= read -r file; do
+  jaq empty "$file"
+done
+'''
+
+[tasks.lint-toml]
+description = "Lint TOML files with Taplo"
+run = '''
+files=$(find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist \) -prune -o -name '*.toml' -print)
+if [ -z "$files" ]; then
+  echo "No TOML files to lint"
+  exit 0
+fi
+taplo lint $files
+'''
+
+[tasks.lint-sh]
+description = "Lint shell scripts with ShellCheck"
+run = '''
+files=$(find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist \) -prune -o -type f -name '*.sh' -print)
+if [ -z "$files" ]; then
+  echo "No shell scripts to lint"
+  exit 0
+fi
+for file in $files; do
+  shellcheck "$file"
+done
+'''
+
+[tasks.lint-github-actions]
+description = "Lint GitHub Actions workflow files"
+run = '''
+if [ ! -d .github/workflows ]; then
+  echo "No GitHub Actions workflows to lint"
+  exit 0
+fi
+files=$(find .github/workflows \( -name '*.yml' -o -name '*.yaml' \) -print)
+if [ -z "$files" ]; then
+  echo "No GitHub Actions workflow files to lint"
+  exit 0
+fi
+actionlint
+uv run check-jsonschema --builtin-schema github-workflows $files
+'''
+
+[tasks.lint-duplicates]
+description = "Detect duplicated code"
+run = "npm run lint:duplicates"
+
+[tasks.test]
+description = "Run the pytest suite"
+run = "uv run pytest tests/"
+
+[tasks.format]
+description = "Format and autofix Python code"
+run = [
+  "uv run ruff format src tests",
+  "uv run ruff check --fix src tests",
+]
+
+[tasks.install-hooks]
+description = "Install pre-commit and pre-push hooks"
+run = "uv run pre-commit install --hook-type pre-commit --hook-type pre-push"
+
+[tasks.clean]
+description = "Remove local build and test cache directories"
+run = [
+  "find . -type d -name __pycache__ -exec rm -rf {} +",
+  "find . -type d -name .pytest_cache -exec rm -rf {} +",
+  "rm -rf dist build *.egg-info",
+]

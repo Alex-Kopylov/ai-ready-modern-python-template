@@ -1,0 +1,14 @@
+{
+  "name": "ai-template-tooling",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10.9.4",
+  "scripts": {
+    "lint:duplicates": "jscpd --config .jscpd.json --threshold 5",
+    "lint:md": "markdownlint-cli2"
+  },
+  "devDependencies": {
+    "jscpd": "4.2.4",
+    "markdownlint-cli2": "0.22.1"
+  }
+}

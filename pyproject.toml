@@ -1,0 +1,34 @@
+[project]
+name = "ai-template"
+version = "0.1.0"
+description = "Project description"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+  # Linting & formatting
+  "ruff",
+  "ty",
+  "flake8",
+  "flake8-pydantic",
+  "flake8-async",
+  "vulture",
+  "bandit",
+  # Testing
+  "pytest",
+  "pytest-xdist",
+  # Pre-commit
+  "pre-commit",
+  # YAML linting
+  "yamllint",
+  # JSON schema validation
+  "check-jsonschema",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

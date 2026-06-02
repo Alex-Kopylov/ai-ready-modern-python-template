@@ -1,0 +1,12 @@
+*.bak
+.history/
+.DS_Store
+__pycache__/
+node_modules/
+.venv/
+.ruff_cache/
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+reports/

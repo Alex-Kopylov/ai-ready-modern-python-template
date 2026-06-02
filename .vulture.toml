@@ -1,0 +1,4 @@
+[tool.vulture]
+min_confidence = 80
+paths = ["src"]
+exclude = ["tests", ".venv"]
