@@ -46,7 +46,7 @@ run = [
 [tasks.lint-dockerfile]
 description = "Lint Dockerfiles with Hadolint"
 run = '''
-files=$(find . \( -path ./.venv -o -path ./build -o -path ./dist \) -prune -o \( -name 'Dockerfile' -o -name 'Dockerfile.*' -o -name '*.dockerfile' \) -print)
+files=$(find . \( -path ./.venv -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o \( -name 'Dockerfile' -o -name 'Dockerfile.*' -o -name '*.dockerfile' \) -print)
 if [ -z "$files" ]; then
   echo "No Dockerfiles to lint"
   exit 0
@@ -67,7 +67,7 @@ run = "uv run yamllint -c .yamllint ."
 [tasks.lint-json]
 description = "Validate JSON syntax with jaq"
 run = '''
-find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist \) -prune -o -name '*.json' -print | while IFS= read -r file; do
+find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o -name '*.json' -print | while IFS= read -r file; do
   jaq empty "$file"
 done
 '''
@@ -75,7 +75,7 @@ done
 [tasks.lint-toml]
 description = "Lint TOML files with Taplo"
 run = '''
-files=$(find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist \) -prune -o -name '*.toml' -print)
+files=$(find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o -name '*.toml' -print)
 if [ -z "$files" ]; then
   echo "No TOML files to lint"
   exit 0
@@ -86,7 +86,7 @@ taplo lint $files
 [tasks.lint-sh]
 description = "Lint shell scripts with ShellCheck"
 run = '''
-files=$(find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist \) -prune -o -type f -name '*.sh' -print)
+files=$(find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o -type f -name '*.sh' -print)
 if [ -z "$files" ]; then
   echo "No shell scripts to lint"
   exit 0

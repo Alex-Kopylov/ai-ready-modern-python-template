@@ -16,6 +16,11 @@ yaml-files:
 ignore:
   - .venv/
   - node_modules/
+  # AI agent working directories
+  - .claude/
+  - .codex/
+  - .cursor/
+  - .gemini/
 
 rules:
   # === ANCHOR VALIDATION ===

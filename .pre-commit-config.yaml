@@ -6,6 +6,10 @@
 
 default_stages: [pre-commit, pre-push]
 
+# AI agent working files are not lint targets (gitleaks still covers them
+# via always_run below)
+exclude: ^(\.claude|\.codex|\.cursor|\.gemini)/|^(CLAUDE|AGENTS|GEMINI)\.md$
+
 repos:
   - repo: local
     hooks:
@@ -15,6 +19,7 @@ repos:
         entry: mise exec -- gitleaks git --pre-commit --staged --redact --no-banner
         language: system
         pass_filenames: false
+        always_run: true
 
       # === PHASE 1: FORMATTING ===
       - id: ruff-format

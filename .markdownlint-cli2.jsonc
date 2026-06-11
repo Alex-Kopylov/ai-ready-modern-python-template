@@ -10,30 +10,30 @@
   // Paths to lint
   "globs": [
     "*.md",
-    ".claude/**/*.md",
-    ".codex/**/*.md",
     ".github/**/*.md",
     "docs/**/*.md",
     "README.md",
-    "CLAUDE.md",
-    "AGENTS.md",
     "CONTRIBUTING.md",
     "LICENSE.md",
     "CODE_OF_CONDUCT.md",
     "CHANGELOG.md"
   ],
 
-  // Exclusions (working documents, build artifacts)
+  // Exclusions (AI agent working files, working documents, build artifacts)
   "ignores": [
-    ".claude/.tmp/**",
-    ".claude/plans/**",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "GEMINI.md",
+    ".claude/**",
+    ".codex/**",
+    ".cursor/**",
+    ".gemini/**",
     ".venv/**",
     "goals/**",
     "node_modules/**",
     "build/**",
     "dist/**",
     "docs/specs/**",
-    "docs/internal/**",
-    ".claude/tests/hooks/results/archive/**"
+    "docs/internal/**"
   ]
 }
