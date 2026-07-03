@@ -10,6 +10,34 @@ node = "22.22.0"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:rhysd/actionlint" = "1.7.11"
 "aqua:tamasfe/taplo" = "0.10.0"
+"aqua:zizmorcore/zizmor" = "1.25.2"
+"aqua:crate-ci/typos" = "1.20.7"
+
+# Python tools managed via uv (installed in venv)
+# Accessible via `mise exec -- <tool>` which uses uv run internally
+[tasks.ruff-format]
+description = "Format Python code with ruff"
+run = "uv run ruff format --force-exclude"
+
+[tasks.ruff-check]
+description = "Lint Python code with ruff"
+run = "uv run ruff check --fix --force-exclude"
+
+[tasks.flake8]
+description = "Run flake8 async checks"
+run = "uv run flake8"
+
+[tasks.ty-check]
+description = "Type check Python code with ty"
+run = "uv run ty check"
+
+[tasks.yamllint]
+description = "Lint YAML files"
+run = "uv run yamllint -c .yamllint"
+
+[tasks.check-jsonschema]
+description = "Validate JSON schemas"
+run = "uv run check-jsonschema"
 
 [tasks.install]
 description = "Install Python project dependencies"
@@ -27,19 +55,21 @@ run = [
     "lint-toml",
     "lint-sh",
     "lint-github-actions",
+    "lint-gha-security",
     "lint-duplicates",
     "lint-secrets",
+    "lint-audit",
+    "lint-typos",
   ] },
 ]
 
 [tasks.lint-python]
 description = "Lint, format-check, type-check, and scan Python code"
 run = [
-  "uv run ruff check src tests",
-  "uv run ruff format --check src tests",
-  "uv run flake8 src",
-  "uv run ty check src",
-  "uv run bandit --ini .bandit -r src",
+  "mise exec -- ruff check src tests",
+  "mise exec -- ruff format --check src tests",
+  "mise exec -- flake8 src",
+  "mise exec -- ty check src",
   "uv run vulture --config .vulture.toml",
 ]
 
@@ -52,23 +82,23 @@ if [ -z "$files" ]; then
   exit 0
 fi
 for file in $files; do
-  hadolint "$file"
+  mise exec -- hadolint "$file"
 done
 '''
 
 [tasks.lint-md]
 description = "Lint Markdown files"
-run = "markdownlint-cli2"
+run = "mise exec -- markdownlint-cli2"
 
 [tasks.lint-yml]
 description = "Lint YAML files"
-run = "uv run yamllint -c .yamllint ."
+run = "mise exec -- yamllint -c .yamllint ."
 
 [tasks.lint-json]
 description = "Validate JSON syntax with jaq"
 run = '''
 find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o -name '*.json' -print | while IFS= read -r file; do
-  jaq empty "$file"
+  mise exec -- jaq empty "$file"
 done
 '''
 
@@ -80,7 +110,7 @@ if [ -z "$files" ]; then
   echo "No TOML files to lint"
   exit 0
 fi
-taplo lint $files
+mise exec -- taplo lint $files
 '''
 
 [tasks.lint-sh]
@@ -92,7 +122,7 @@ if [ -z "$files" ]; then
   exit 0
 fi
 for file in $files; do
-  shellcheck "$file"
+  mise exec -- shellcheck "$file"
 done
 '''
 
@@ -108,17 +138,29 @@ if [ -z "$files" ]; then
   echo "No GitHub Actions workflow files to lint"
   exit 0
 fi
-actionlint
-uv run check-jsonschema --builtin-schema github-workflows $files
+mise exec -- actionlint
+mise exec -- check-jsonschema --builtin-schema github-workflows $files
 '''
 
 [tasks.lint-duplicates]
 description = "Detect duplicated code"
-run = "jscpd --config .jscpd.json --threshold 5"
+run = "mise exec -- jscpd --config .jscpd.json --threshold 5"
 
 [tasks.lint-secrets]
 description = "Scan git history for leaked secrets"
-run = "gitleaks git --redact --no-banner"
+run = "mise exec -- gitleaks git --redact --no-banner"
+
+[tasks.lint-gha-security]
+description = "Scan GitHub Actions workflows for security issues"
+run = "mise exec -- zizmor"
+
+[tasks.lint-audit]
+description = "Scan Python dependencies for known CVEs"
+run = "uv audit"
+
+[tasks.lint-typos]
+description = "Scan for spelling mistakes"
+run = "mise exec -- typos"
 
 [tasks.test]
 description = "Run the pytest suite"
@@ -131,8 +173,8 @@ run = "uv run pytest tests/ --cov --cov-report=term-missing"
 [tasks.format]
 description = "Format and autofix Python code"
 run = [
-  "uv run ruff format src tests",
-  "uv run ruff check --fix src tests",
+  "mise exec -- ruff format src tests",
+  "mise exec -- ruff check --fix src tests",
 ]
 
 [tasks.install-hooks]

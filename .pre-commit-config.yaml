@@ -1,4 +1,15 @@
 # Pre-commit hooks for code quality enforcement
+#
+# STRATEGY: mise is the single source of truth for tool config and execution.
+# Pre-commit acts as a routing layer only. All tools are invoked through:
+#  - mise exec -- <tool>  (for system tools)
+#  - mise run <task>      (for multi-step tasks defined in mise.toml)
+#
+# This ensures:
+#  1. Tool versions & args are defined once in mise.toml, not duplicated here
+#  2. Parity between pre-commit checks and explicit `mise run lint` calls
+#  3. Easy tool/config changes without editing multiple files
+#
 # Install: uv add --dev pre-commit
 #   && uv run pre-commit install --hook-type pre-commit --hook-type pre-push
 # Pre-push only: uv run pre-commit install --hook-type pre-push
@@ -21,32 +32,41 @@ repos:
         pass_filenames: false
         always_run: true
 
-      # === PHASE 1: FORMATTING ===
+      # === PHASE 1: uv LOCK CHECK ===
+      - id: uv-lock-check
+        name: uv (lock check)
+        entry: uv lock --check
+        language: system
+        files: ^(pyproject.toml|uv.lock)$
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # === PHASE 2: FORMATTING ===
       - id: ruff-format
         name: ruff (format)
-        entry: uv run ruff format --force-exclude
+        entry: mise exec -- ruff format --force-exclude
         language: system
         types: [python]
 
-      # === PHASE 2: LINTING ===
+      # === PHASE 3: LINTING ===
       - id: ruff-check
         name: ruff (lint)
-        entry: uv run ruff check --fix --force-exclude
+        entry: mise exec -- ruff check --fix --force-exclude
         language: system
         types: [python]
 
-      # === PHASE 2b: ASYNC LINTING ===
+      # === PHASE 3b: ASYNC LINTING ===
       - id: flake8-async
         name: flake8-async (async patterns)
-        entry: uv run flake8 --select=ASYNC
+        entry: mise exec -- flake8 --select=ASYNC
         language: system
         types: [python]
         exclude: ^(tests/|scripts/|docs/)
 
-      # === PHASE 3: TYPE CHECKING ===
+      # === PHASE 4: TYPE CHECKING ===
       - id: ty-check
         name: ty (types)
-        entry: uv run ty check
+        entry: mise exec -- ty check
         language: system
         types: [python]
         exclude: ^(scripts/|docs/|tests/)
@@ -54,56 +74,63 @@ repos:
 
   - repo: local
     hooks:
-      # === PHASE 4: SHELL ===
+      # === PHASE 5: SHELL ===
       - id: shellcheck
         name: shellcheck
         entry: mise exec -- shellcheck
         language: system
         types: [shell]
 
-      # === PHASE 5: YAML ===
+      # === PHASE 6: YAML ===
       - id: yamllint
         name: yamllint
-        entry: uv run yamllint -c .yamllint
+        entry: mise exec -- yamllint -c .yamllint
         language: system
         types: [yaml]
 
-      # === PHASE 6: JSON ===
+      # === PHASE 7: JSON ===
       - id: check-json
         name: jaq (json syntax)
         entry: mise exec -- jaq empty
         language: system
         types: [json]
 
-      # === PHASE 7: TOML ===
+      # === PHASE 8: TOML ===
       - id: taplo-lint
         name: taplo (toml)
         entry: mise exec -- taplo lint
         language: system
         types: [toml]
 
-      # === PHASE 8: DOCKERFILE ===
+      # === PHASE 9: DOCKERFILE ===
       - id: hadolint
         name: hadolint
         entry: mise exec -- hadolint
         language: system
         files: (^|/)Dockerfile(\..*)?$|\.dockerfile$
 
-      # === PHASE 8a: GITHUB ACTIONS SCHEMA ===
+      # === PHASE 10: GITHUB ACTIONS SCHEMA ===
       - id: check-jsonschema-github-workflows
         name: check-jsonschema (GitHub Workflows)
-        entry: uv run check-jsonschema --builtin-schema github-workflows
+        entry: mise exec -- check-jsonschema --builtin-schema github-workflows
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
 
-      # === PHASE 8b: ACTIONLINT ===
+      # === PHASE 11: ACTIONLINT ===
       - id: actionlint
         name: actionlint
         entry: mise exec -- actionlint
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
 
-      # === PHASE 10: DUPLICATES ===
+      # === PHASE 11b: ZIZMOR (GHA SECURITY) ===
+      - id: zizmor
+        name: zizmor (GitHub Actions security)
+        entry: mise exec -- zizmor
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+
+      # === PHASE 12: DUPLICATES ===
       - id: jscpd
         name: jscpd (duplicates)
         entry: mise exec -- jscpd --config .jscpd.json --threshold 5
@@ -112,6 +139,25 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
         verbose: true
+
+  - repo: local
+    hooks:
+      # === PHASE 13: DEPENDENCY AUDIT ===
+      - id: uv-audit
+        name: uv (audit)
+        entry: uv audit
+        language: system
+        files: ^(pyproject.toml|uv.lock)$
+        pass_filenames: false
+        stages: [pre-commit]
+
+      # === PHASE 14: SPELLING ===
+      - id: typos
+        name: typos (spelling)
+        entry: mise exec -- typos
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
 
 # === INTENTIONAL EXCLUSIONS ===
 # The following tools are useful in editor, agent, or CI workflows but NOT in pre-commit:

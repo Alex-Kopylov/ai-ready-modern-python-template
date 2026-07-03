@@ -25,6 +25,7 @@ repo direction is clear.
   run `mise install` before invoking native linters directly.
 - Node-based lint CLIs are pinned in `mise.toml` through mise's npm backend
   and installed with `mise install`.
+- Use `zizmor` to catch workflow security issues at commit time.
 
 ## Workflow
 
