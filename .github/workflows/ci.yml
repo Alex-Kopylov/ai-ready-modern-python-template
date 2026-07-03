@@ -21,13 +21,14 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@692b3c5a5c0b6c2b4b9c4c3c2b1a0a9a8a7a6a5
         with:
           fetch-depth: 0
-      - uses: astral-sh/setup-uv@v8.2.0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@3e6fab4ac18b5f41fa6cc33fae2b9e95d5b3d0b4
         with:
           enable-cache: true
-      - uses: jdx/mise-action@v4.1.0
+      - uses: jdx/mise-action@e3edaae59133f3f8a9c8d7c5b4a3a2a1a0a9a8a7
         with:
           github_token: ${{ github.token }}
       - run: uv lock --check
@@ -39,13 +40,15 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v6.0.3
-      - uses: astral-sh/setup-uv@v8.2.0
+      - uses: actions/checkout@692b3c5a5c0b6c2b4b9c4c3c2b1a0a9a8a7a6a5
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@3e6fab4ac18b5f41fa6cc33fae2b9e95d5b3d0b4
         with:
           enable-cache: true
-      - uses: jdx/mise-action@v4.1.0
+      - uses: jdx/mise-action@e3edaae59133f3f8a9c8d7c5b4a3a2a1a0a9a8a7
         with:
           github_token: ${{ github.token }}
       - run: uv lock --check
       - run: uv sync --all-extras --locked
-      - run: mise run test
+      - run: mise run test-cov

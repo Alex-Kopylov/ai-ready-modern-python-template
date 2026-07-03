@@ -43,15 +43,23 @@ select = [
   "PLW",  # Pylint Warning
   # Testing category
   "PT",   # flake8-pytest-style - pytest best practices
+  # Additional low-false-positive categories
+  "ASYNC", # flake8-async - asyncio best practices
+  "C4",    # flake8-comprehensions - comprehension optimization
+  "DTZ",   # flake8-datetimez - naive datetime detection
+  "T10",   # flake8-debugger - leftover breakpoint() detection
+  "BLE",   # flake8-blind-except - overly broad exception catching
+  "PIE",   # flake8-pie - misc. productivity improvements
+  "PTH",   # flake8-use-pathlib - pathlib usage enforcement
+  "SLF",   # flake8-self - private member access detection
+  "RSE",   # flake8-raise - raise statement improvements
+  "INP",   # flake8-no-pep420 - implicit namespace package detection
 ]
 ignore = [
   "PLC0415",  # import-outside-top-level - intentional pattern for:
               # - Circular import avoidance
               # - Pydantic validator optimization
               # - Lazy loading for optional dependencies
-  "RUF100",   # unused-noqa - false positives on valid noqa comments
-              # Known ruff issue: reports "non-enabled" for rules that DO trigger
-              # See: github.com/astral-sh/ruff/issues/10906, #12591
 ]
 
 [lint.mccabe]
