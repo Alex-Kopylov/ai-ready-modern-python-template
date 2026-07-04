@@ -14,7 +14,7 @@ node = "22.22.0"
 "aqua:crate-ci/typos" = "1.20.7"
 
 # Python tools managed via uv (installed in venv)
-# Accessible via `mise exec -- <tool>` which uses uv run internally
+# Accessible via `uv run <tool>` after `uv sync`
 [tasks.ruff-format]
 description = "Format Python code with ruff"
 run = "uv run ruff format --force-exclude"
@@ -65,8 +65,8 @@ run = [
 [tasks.lint-python]
 description = "Lint, format-check, type-check, and scan Python code"
 run = [
-  "mise exec -- ruff check src tests",
-  "mise exec -- ruff format --check src tests",
+  "uv run ruff check src tests",
+  "uv run ruff format --check src tests",
   "uv run flake8 src",
   "uv run ty check src",
   "uv run vulture --config .vulture.toml",
@@ -91,7 +91,7 @@ run = "mise exec -- markdownlint-cli2"
 
 [tasks.lint-yml]
 description = "Lint YAML files"
-run = "mise exec -- yamllint -c .yamllint ."
+run = "uv run yamllint -c .yamllint ."
 
 [tasks.lint-json]
 description = "Validate JSON syntax with jaq"
@@ -183,8 +183,8 @@ run = "uv run pytest tests/ --cov --cov-report=term-missing"
 [tasks.format]
 description = "Format and autofix Python code"
 run = [
-  "mise exec -- ruff format src tests",
-  "mise exec -- ruff check --fix src tests",
+  "uv run ruff format src tests",
+  "uv run ruff check --fix src tests",
 ]
 
 [tasks.install-hooks]
