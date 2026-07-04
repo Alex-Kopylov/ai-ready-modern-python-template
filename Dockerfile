@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM ghcr.io/astral-sh/uv:0.11.21-python3.14-trixie-slim
+FROM ghcr.io/astral-sh/uv:0.11.25-python3.14-trixie-slim
 
 LABEL maintainer="ai-template contributors" \
       version="0.1.0"
