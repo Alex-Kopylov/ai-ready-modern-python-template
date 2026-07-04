@@ -1,19 +1,20 @@
-# Pre-commit hooks for code quality enforcement
+# prek hooks for code quality enforcement
 #
 # STRATEGY: mise is the single source of truth for tool config and execution.
-# Pre-commit acts as a routing layer only. All tools are invoked through:
+# prek acts as a routing layer only. All tools are invoked through:
 #  - mise exec -- <tool>  (for system tools)
+#  - uv run <tool>       (for Python tools)
 #  - mise run <task>      (for multi-step tasks defined in mise.toml)
 #
 # This ensures:
 #  1. Tool versions & args are defined once in mise.toml, not duplicated here
-#  2. Parity between pre-commit checks and explicit `mise run lint` calls
+#  2. Parity between hook checks and explicit `mise run lint` calls
 #  3. Easy tool/config changes without editing multiple files
 #
-# Install: uv add --dev pre-commit
-#   && uv run pre-commit install --hook-type pre-commit --hook-type pre-push
-# Pre-push only: uv run pre-commit install --hook-type pre-push
-# Run (repo-wide baseline): uv run pre-commit run --all-files
+# Install: uv add --dev prek
+#   && uv run prek install --hook-type pre-commit --hook-type pre-push
+# Pre-push only: uv run prek install --hook-type pre-push
+# Run (repo-wide baseline): uv run prek run --all-files
 
 default_stages: [pre-commit, pre-push]
 
@@ -44,21 +45,21 @@ repos:
       # === PHASE 2: FORMATTING ===
       - id: ruff-format
         name: ruff (format)
-        entry: mise exec -- ruff format --force-exclude
+        entry: uv run ruff format --force-exclude
         language: system
         types: [python]
 
       # === PHASE 3: LINTING ===
       - id: ruff-check
         name: ruff (lint)
-        entry: mise exec -- ruff check --fix --force-exclude
+        entry: uv run ruff check --fix --force-exclude
         language: system
         types: [python]
 
       # === PHASE 3b: ASYNC LINTING ===
       - id: flake8-async
         name: flake8-async (async patterns)
-        entry: mise exec -- flake8 --select=ASYNC
+        entry: uv run flake8 --select=ASYNC
         language: system
         types: [python]
         exclude: ^(tests/|scripts/|docs/)
@@ -66,7 +67,7 @@ repos:
       # === PHASE 4: TYPE CHECKING ===
       - id: ty-check
         name: ty (types)
-        entry: mise exec -- ty check
+        entry: uv run ty check
         language: system
         types: [python]
         exclude: ^(scripts/|docs/|tests/)
@@ -84,7 +85,7 @@ repos:
       # === PHASE 6: YAML ===
       - id: yamllint
         name: yamllint
-        entry: mise exec -- yamllint -c .yamllint
+        entry: uv run yamllint -c .yamllint
         language: system
         types: [yaml]
 
@@ -112,7 +113,7 @@ repos:
       # === PHASE 10: GITHUB ACTIONS SCHEMA ===
       - id: check-jsonschema-github-workflows
         name: check-jsonschema (GitHub Workflows)
-        entry: mise exec -- check-jsonschema --builtin-schema github-workflows
+        entry: uv run check-jsonschema --builtin-schema github-workflows
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
 
@@ -160,7 +161,7 @@ repos:
         stages: [pre-commit]
 
 # === INTENTIONAL EXCLUSIONS ===
-# The following tools are useful in editor, agent, or CI workflows but NOT in pre-commit:
+# The following tools are useful in editor, agent, or CI workflows but NOT in hook runs:
 # - markdownlint-cli2: pass_filenames=false causes it to scan gitignored docs/plans/
 #   (auto-generated reports that don't conform to style rules); removed to reduce noise
 # - vulture: High false positive rate, advisory-only (needs whitelist)

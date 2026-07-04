@@ -19,8 +19,8 @@ dev = [
   # Testing
   "pytest",
   "pytest-xdist",
-  # Pre-commit
-  "pre-commit",
+  # Git hooks
+  "prek",
   # YAML linting
   "yamllint",
   # JSON schema validation

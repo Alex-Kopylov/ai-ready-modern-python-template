@@ -188,8 +188,8 @@ run = [
 ]
 
 [tasks.install-hooks]
-description = "Install pre-commit and pre-push hooks"
-run = "uv run pre-commit install --hook-type pre-commit --hook-type pre-push"
+description = "Install prek-managed pre-commit and pre-push hooks"
+run = "uv run prek install --hook-type pre-commit --hook-type pre-push"
 
 [tasks.clean]
 description = "Remove local build and test cache directories"
