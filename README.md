@@ -22,6 +22,10 @@ need mechanical cleanup once the linters and tests are green.
 - One aggregate lint command for local use, hooks, and CI.
 - Guardrails that reduce the need for constant human supervision.
 
+See [other modern Python tools](docs/other-modern-python-tools.md) for tools
+that may be useful when adapting this template to a concrete domain, package, or
+team workflow.
+
 ## Quick start
 
 ```bash
