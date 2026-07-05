@@ -37,4 +37,5 @@ mise install            # install pinned tools
 mise run install        # install Python dependencies
 mise run install-hooks  # install prek-managed pre-commit and pre-push hooks
 mise run lint           # run the full lint gate
+mise run test           # run the pytest suite
 ```

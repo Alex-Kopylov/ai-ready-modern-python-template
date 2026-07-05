@@ -34,3 +34,21 @@ jobs:
       - run: uv lock --check
       - run: uv sync --all-extras --locked
       - run: mise run lint
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+      - uses: jdx/mise-action@v4.2.0
+        with:
+          github_token: ${{ github.token }}
+      - run: uv lock --check
+      - run: uv sync --all-extras --locked
+      - run: mise run test-cov

@@ -72,6 +72,10 @@ Use these rules when adding a new linter:
   `lint-full`.
 - Keep CI on `mise run lint` so the default lint command stays the authoritative
   final gate.
+- Do not hide missing configured targets behind "skip if missing" logic. If a
+  task names `src`, `tests`, `Dockerfile`, or a workflow file, that target is
+  part of the repository contract. Restore the target or update the task
+  configuration.
 
 `deptry` belongs in full lint and the commit hook, not fast lint. Dependency
 declaration checks are valuable before code is committed, but they can produce
