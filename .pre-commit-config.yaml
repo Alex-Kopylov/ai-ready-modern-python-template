@@ -1,15 +1,19 @@
 # prek hooks for code quality enforcement
 #
-# STRATEGY: mise is the single source of truth for tool config and execution.
-# prek acts as a routing layer only. All tools are invoked through:
+# STRATEGY: mise remains the single source of truth for default local/CI lint
+# tasks, while prek owns commit-time guardrails. Most hooks route into the same
+# uv/mise-managed tools; hook-only checks are allowed when they would be too
+# noisy or context-sensitive for the default aggregate.
+#
+# All tools are invoked through:
 #  - mise exec -- <tool>  (for system tools)
 #  - uv run <tool>       (for Python tools)
 #  - mise run <task>      (for multi-step tasks defined in mise.toml)
 #
 # This ensures:
-#  1. Tool versions & args are defined once in mise.toml, not duplicated here
-#  2. Parity between hook checks and explicit `mise run lint` calls
-#  3. Easy tool/config changes without editing multiple files
+#  1. Tool versions stay managed by mise or uv, not hook-local environments
+#  2. Default lint behavior stays visible in `mise.toml`
+#  3. Hook-only checks are explicit and easy to audit
 #
 # Install: uv add --dev prek
 #   && uv run prek install --hook-type pre-commit --hook-type pre-push
@@ -144,6 +148,14 @@ repos:
   - repo: local
     hooks:
       # === PHASE 13: DEPENDENCY AUDIT ===
+      - id: deptry
+        name: deptry (dependency declarations)
+        entry: uv run deptry .
+        language: system
+        files: ^(src/.*\.py|pyproject\.toml|uv\.lock)$
+        pass_filenames: false
+        stages: [pre-commit]
+
       - id: uv-audit
         name: uv (audit)
         entry: uv audit

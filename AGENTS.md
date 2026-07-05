@@ -30,5 +30,9 @@ repo direction is clear.
 ## Workflow
 
 - Prefer the existing `mise run` tasks before invoking tools directly.
+- Treat `mise run lint` as the default local/CI lint contract.
+- Treat `.pre-commit-config.yaml` as the commit-time guardrail surface; a hook
+  may be intentionally commit-only when it is useful before committing but too
+  noisy for the default aggregate.
 - Keep generated or project-specific automation out of shared config unless the
   supporting scripts are committed too.

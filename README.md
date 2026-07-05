@@ -19,8 +19,20 @@ need mechanical cleanup once the linters and tests are green.
 - Fast setup with `uv` and `mise`.
 - Reproducible local and CI tooling.
 - Early feedback for common AI-generated code issues.
-- One aggregate lint command for local use, hooks, and CI.
+- One aggregate lint command for local use and CI, plus explicit commit-time
+  guardrails.
 - Guardrails that reduce the need for constant human supervision.
+
+## Check surfaces
+
+- `mise run lint` is the default local and CI lint contract. Keep it stable,
+  deterministic, and low-noise.
+- `.pre-commit-config.yaml` owns commit-time guardrails. It can include
+  additional checks that are useful before saving a commit but too
+  context-sensitive for the default aggregate.
+- `deptry` is intentionally commit-hook-only: dependency-declaration checks are
+  useful at commit time, but can be noisy while an agent is still staging a
+  broader dependency or deployment change.
 
 ## Quick start
 
