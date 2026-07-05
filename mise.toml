@@ -90,54 +90,15 @@ run = [
 
 [tasks.lint-python-fast]
 description = "Run fast Python checks"
-run = '''
-python_dirs="src"
-if [ -d tests ]; then
-  python_dirs="$python_dirs tests"
-fi
-python_files=$(find $python_dirs -type f -name '*.py')
-if [ -z "$python_files" ]; then
-  echo "No Python files to lint"
-  exit 0
-fi
-
-uv run ruff check $python_files
-uv run ruff format --check $python_files
-
-src_python_files=$(find src -type f -name '*.py' 2>/dev/null)
-if [ -z "$src_python_files" ]; then
-  echo "No src Python files for flake8"
-  exit 0
-fi
-uv run flake8 $src_python_files
-'''
+run = "./scripts/mise/lint-python-fast.sh"
 
 [tasks.lint-python-deep]
 description = "Run whole-project Python analysis"
-run = [
-  '''
-  src_python_files=$(find src -type f -name '*.py' 2>/dev/null)
-  if [ -z "$src_python_files" ]; then
-    echo "No src Python files for whole-project analysis"
-    exit 0
-  fi
-  uv run ty check src
-  uv run vulture --config .vulture.toml
-  ''',
-]
+run = "./scripts/mise/lint-python-deep.sh"
 
 [tasks.lint-dockerfile]
 description = "Lint Dockerfiles with Hadolint"
-run = '''
-files=$(find . \( -path ./.venv -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o \( -name 'Dockerfile' -o -name 'Dockerfile.*' -o -name '*.dockerfile' \) -print)
-if [ -z "$files" ]; then
-  echo "No Dockerfiles to lint"
-  exit 0
-fi
-for file in $files; do
-  mise exec -- hadolint "$file"
-done
-'''
+run = "./scripts/mise/lint-dockerfile.sh"
 
 [tasks.lint-md]
 description = "Lint Markdown files"
@@ -149,51 +110,19 @@ run = "uv run yamllint -c .yamllint ."
 
 [tasks.lint-json]
 description = "Validate JSON syntax with jaq"
-run = '''
-find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o -name '*.json' -print | while IFS= read -r file; do
-  mise exec -- jaq empty "$file"
-done
-'''
+run = "./scripts/mise/lint-json.sh"
 
 [tasks.lint-toml]
 description = "Lint TOML files with Taplo"
-run = '''
-files=$(find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o -name '*.toml' -print)
-if [ -z "$files" ]; then
-  echo "No TOML files to lint"
-  exit 0
-fi
-mise exec -- taplo lint $files
-'''
+run = "./scripts/mise/lint-toml.sh"
 
 [tasks.lint-sh]
 description = "Lint shell scripts with ShellCheck"
-run = '''
-files=$(find . \( -path ./.venv -o -path ./node_modules -o -path ./build -o -path ./dist -o -path ./.claude -o -path ./.codex -o -path ./.cursor -o -path ./.gemini \) -prune -o -type f -name '*.sh' -print)
-if [ -z "$files" ]; then
-  echo "No shell scripts to lint"
-  exit 0
-fi
-for file in $files; do
-  mise exec -- shellcheck "$file"
-done
-'''
+run = "./scripts/mise/lint-sh.sh"
 
 [tasks.lint-github-actions]
 description = "Lint GitHub Actions workflow files"
-run = '''
-if [ ! -d .github/workflows ]; then
-  echo "No GitHub Actions workflows to lint"
-  exit 0
-fi
-files=$(find .github/workflows \( -name '*.yml' -o -name '*.yaml' \) -print)
-if [ -z "$files" ]; then
-  echo "No GitHub Actions workflow files to lint"
-  exit 0
-fi
-mise exec -- actionlint
-uv run check-jsonschema --builtin-schema github-workflows $files
-'''
+run = "./scripts/mise/lint-github-actions.sh"
 
 [tasks.lint-duplicates]
 description = "Detect duplicated code"
@@ -209,18 +138,7 @@ run = "mise exec -- gitleaks git --redact --no-banner"
 
 [tasks.lint-gha-security]
 description = "Scan GitHub Actions workflows for security issues"
-run = '''
-if [ ! -d .github/workflows ]; then
-  echo "No GitHub Actions workflows to scan"
-  exit 0
-fi
-files=$(find .github/workflows \( -name '*.yml' -o -name '*.yaml' \) -print)
-if [ -z "$files" ]; then
-  echo "No GitHub Actions workflow files to scan"
-  exit 0
-fi
-mise exec -- zizmor $files
-'''
+run = "./scripts/mise/lint-gha-security.sh"
 
 [tasks.lint-audit]
 description = "Scan Python dependencies for known CVEs"
@@ -232,39 +150,15 @@ run = "mise exec -- typos"
 
 [tasks.test]
 description = "Run product tests when present"
-run = '''
-if [ ! -d tests ] || ! find tests -type f \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then
-  echo "No product tests to run"
-  exit 0
-fi
-uv run pytest tests/
-'''
+run = "./scripts/mise/test.sh"
 
 [tasks.test-cov]
 description = "Run product tests with a coverage report when present"
-run = '''
-if [ ! -d tests ] || ! find tests -type f \( -name 'test_*.py' -o -name '*_test.py' \) | grep -q .; then
-  echo "No product tests to run"
-  exit 0
-fi
-uv run pytest tests/ --cov --cov-report=term-missing
-'''
+run = "./scripts/mise/test.sh --coverage"
 
 [tasks.format]
 description = "Format and autofix Python code"
-run = '''
-python_dirs="src"
-if [ -d tests ]; then
-  python_dirs="$python_dirs tests"
-fi
-python_files=$(find $python_dirs -type f -name '*.py')
-if [ -z "$python_files" ]; then
-  echo "No Python files to format"
-  exit 0
-fi
-uv run ruff format $python_files
-uv run ruff check --fix $python_files
-'''
+run = "./scripts/mise/format-python.sh"
 
 [tasks.install-hooks]
 description = "Install prek-managed pre-commit and pre-push hooks"
