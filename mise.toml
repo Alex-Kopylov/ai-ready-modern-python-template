@@ -91,7 +91,11 @@ run = [
 [tasks.lint-python-fast]
 description = "Run fast Python checks"
 run = '''
-python_files=$(find src tests -type f -name '*.py' 2>/dev/null)
+python_dirs="src"
+if [ -d tests ]; then
+  python_dirs="$python_dirs tests"
+fi
+python_files=$(find $python_dirs -type f -name '*.py')
 if [ -z "$python_files" ]; then
   echo "No Python files to lint"
   exit 0
@@ -249,7 +253,11 @@ uv run pytest tests/ --cov --cov-report=term-missing
 [tasks.format]
 description = "Format and autofix Python code"
 run = '''
-python_files=$(find src tests -type f -name '*.py' 2>/dev/null)
+python_dirs="src"
+if [ -d tests ]; then
+  python_dirs="$python_dirs tests"
+fi
+python_files=$(find $python_dirs -type f -name '*.py')
 if [ -z "$python_files" ]; then
   echo "No Python files to format"
   exit 0
