@@ -5,7 +5,7 @@ _min_copier_version: "9.1.0"
 _message_after_copy: |
   Next steps:
 
-    cd {{ project_name }}
+    cd {{ _copier_conf.dst_path }}
     git init
     git add .
     git commit -m "chore: initial project from template"
@@ -22,8 +22,9 @@ project_name:
   help: Project directory and display name.
   default: my-project
   validator: >-
-    {% if not project_name.strip() %}
-    Project name cannot be empty.
+    {% if not (project_name | regex_search('^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$')) %}
+    Use letters, digits, dots, underscores, and dashes (no spaces); start
+    and end with a letter or digit.
     {% endif %}
 
 package_name:

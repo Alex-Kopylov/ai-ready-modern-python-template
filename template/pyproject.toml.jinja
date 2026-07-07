@@ -1,9 +1,13 @@
 [project]
-name = "{{ project_name }}"
+name = "{{ project_name | lower }}"
 version = "0.1.0"
 description = "{{ project_description }}"
 requires-python = ">={{ python_version }}"
+{% if license == 'Proprietary' -%}
+license = "LicenseRef-Proprietary"
+{% else -%}
 license = "{{ license }}"
+{% endif -%}
 dependencies = []
 
 [dependency-groups]
