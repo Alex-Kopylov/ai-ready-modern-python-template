@@ -1,3 +1,6 @@
+# CI matrix fixture: custom mode with every optional feature disabled.
+# python_version 3.12 is deliberate (defaults leg covers 3.14,
+# everything-on covers 3.13) — do not "align" these.
 project_name: generated-everything-off
 package_name: generated_everything_off
 project_description: Generated project with optional features disabled
