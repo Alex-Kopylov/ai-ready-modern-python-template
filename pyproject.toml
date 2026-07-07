@@ -16,7 +16,6 @@ dev = [
   "flake8-async",
   "vulture",
   "deptry>=0.25.1",
-  "bandit",
   # Testing
   "pytest",
   "pytest-xdist",
