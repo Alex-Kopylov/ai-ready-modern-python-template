@@ -18,15 +18,6 @@ shared quality gates without documenting the reason.
 - `mise run test-cov`: run the pytest suite with a coverage report.
 - `mise run install-hooks`: install prek-managed pre-commit and pre-push hooks.
 
-## Enabled Features
-
-- Python: `{{ python_version }}` pinned to `{{ python_version_pin }}`.
-- Package build: `{% if is_package %}enabled{% else %}disabled{% endif %}`.
-- Docker and Hadolint: `{% if use_docker %}enabled{% else %}disabled{% endif %}`.
-- GitHub Actions, Dependabot, Renovate, and zizmor: `{% if use_github_actions %}enabled{% else %}disabled{% endif %}`.
-- Extra linters: `{% if extra_linters %}{{ extra_linters | join(', ') }}{% else %}none{% endif %}`.
-- Coverage fail-under: `{% if coverage_fail_under > 0 %}{{ coverage_fail_under }}{% else %}off{% endif %}`.
-
 ## Tooling
 
 - Use `jaq` instead of `jq` for JSON command-line work.

@@ -30,7 +30,10 @@ cleanup() {
 trap cleanup EXIT
 
 printf 'Generating project with answers: %s\n' "$answers_file"
-uvx copier copy --defaults --data-file "$answers_file" "$repo_root" "$generated_dir"
+# --vcs-ref=HEAD makes copier include uncommitted template changes; without
+# it, local runs silently generate from the last commit and dirty edits go
+# untested.
+uvx copier copy --defaults --vcs-ref=HEAD --data-file "$answers_file" "$repo_root" "$generated_dir"
 
 cd "$generated_dir"
 
@@ -45,3 +48,6 @@ mise install
 uv sync
 mise run lint
 mise run test
+# Generated-project CI runs test-cov; gate it here so the coverage
+# fail-under path is exercised for every answer set.
+mise run test-cov

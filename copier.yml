@@ -52,20 +52,25 @@ setup_mode:
 
 python_version:
   type: str
-  help: Python minor version for requires-python, ty, mise, and .python-version.
-  choices:
-    "3.12": "3.12"
-    "3.13": "3.13"
-    "3.14": "3.14"
+  help: >-
+    Python version for requires-python, ty, mise, and .python-version. Use a
+    minor version like 3.13 (mise resolves the latest patch) or an exact
+    patch version like 3.13.2.
   default: "3.14"
+  # Floor computed from requires-python of the latest dev toolchain deps:
+  # deptry, pytest, yamllint, and check-jsonschema all require >=3.10.
+  validator: >-
+    {% if not (python_version | regex_search('^3\.\d+(\.\d+)?$'))
+       or (python_version.split('.')[1] | int) < 10 %}
+    3.10 is the oldest version supported by the dev toolchain
+    {% endif %}
   when: "{{ setup_mode == 'custom' }}"
 
 license:
   type: str
-  help: Project license.
+  help: Project license; other licenses are a post-generation file edit.
   choices:
     MIT: MIT
-    Apache-2.0: Apache-2.0
     Proprietary: Proprietary
   default: MIT
   when: "{{ setup_mode == 'custom' }}"
@@ -111,21 +116,32 @@ extra_linters:
 coverage_fail_under:
   type: int
   help: Minimum coverage percentage; 0 leaves the coverage gate off.
-  default: 0
+  default: 80
   validator: >-
     {% if coverage_fail_under < 0 or coverage_fail_under > 100 %}
     Use an integer from 0 to 100.
     {% endif %}
   when: "{{ setup_mode == 'custom' }}"
 
+python_version_minor:
+  type: str
+  default: "{{ python_version.split('.')[:2] | join('.') }}"
+  when: false
+
 python_version_pin:
   type: str
+  # Exact patch versions pass through verbatim; known minors map to pinned
+  # patches; any other minor passes through and mise resolves the latest patch.
   default: >-
-    {% if python_version == '3.12' -%}
+    {% if python_version.split('.') | length == 3 -%}
+    {{ python_version }}
+    {%- elif python_version == '3.12' -%}
     3.12.13
     {%- elif python_version == '3.13' -%}
     3.13.14
-    {%- else -%}
+    {%- elif python_version == '3.14' -%}
     3.14.6
+    {%- else -%}
+    {{ python_version }}
     {%- endif %}
   when: false

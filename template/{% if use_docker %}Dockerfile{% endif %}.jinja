@@ -1,9 +1,13 @@
 # syntax=docker/dockerfile:1.7
 
-FROM ghcr.io/astral-sh/uv:0.11.25-python{{ python_version }}-trixie-slim
+FROM ghcr.io/astral-sh/uv:0.11.25-python{{ python_version_minor }}-trixie-slim
 
-LABEL maintainer="{{ project_name }} contributors" \
+{% if author_name -%}
+LABEL maintainer={{ author_name | tojson }} \
       version="0.1.0"
+{% else -%}
+LABEL version="0.1.0"
+{% endif -%}
 
 WORKDIR /app
 

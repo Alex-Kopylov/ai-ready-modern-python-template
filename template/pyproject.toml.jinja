@@ -1,8 +1,8 @@
 [project]
 name = "{{ project_name | lower }}"
 version = "0.1.0"
-description = "{{ project_description }}"
-requires-python = ">={{ python_version }}"
+description = {{ project_description | tojson }}
+requires-python = ">={{ python_version_minor }}"
 {% if license == 'Proprietary' -%}
 license = "LicenseRef-Proprietary"
 {% else -%}
@@ -48,7 +48,7 @@ packages = ["src/{{ package_name }}"]
 {% endif %}
 
 [tool.ty.environment]
-python-version = "{{ python_version }}"
+python-version = "{{ python_version_minor }}"
 
 [tool.coverage.run]
 source = ["src"]

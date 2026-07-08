@@ -1,4 +1,4 @@
-target-version = "py{{ python_version | replace('.', '') }}"
+target-version = "py{{ python_version_minor | replace('.', '') }}"
 line-length = 120
 src = ["src", "tests"]
 exclude = [".venv", "build", "dist"]
