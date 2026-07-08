@@ -2,6 +2,15 @@ _subdirectory: template
 _answers_file: .copier-answers.yml
 _min_copier_version: "9.1.0"
 
+# Explicit jinja whitespace behavior: copier's defaults changed across
+# releases (9.16 stopped trimming block-tag lines), which silently broke
+# rendered markdown/TOML whitespace. Every .jinja file here is authored
+# against these values.
+_envops:
+  trim_blocks: true
+  lstrip_blocks: true
+  keep_trailing_newline: true
+
 _message_after_copy: |
   Next steps:
 

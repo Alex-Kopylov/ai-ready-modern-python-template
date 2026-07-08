@@ -2,7 +2,7 @@
 python = "{{ python_version_pin }}"
 # Pinned like every other tool; "latest" made task runs depend on whatever
 # uv happened to resolve (lint-audit needs uv >= 0.11.19 for `uv audit`).
-# aqua backend: mise's core uv plugin mis-extracts current uv tarballs
+# aqua backend: mise's core uv plugin extracts current uv tarballs incorrectly
 # (binary stays under uv-<target>/ with no bin/), silently falling back to
 # any system uv.
 "aqua:astral-sh/uv" = "0.11.27"
