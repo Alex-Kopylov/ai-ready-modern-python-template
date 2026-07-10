@@ -6,13 +6,11 @@ updates:
     schedule:
       interval: "weekly"
 
-{% if use_docker %}
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
 
-{% endif %}
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

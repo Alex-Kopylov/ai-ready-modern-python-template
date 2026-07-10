@@ -9,7 +9,7 @@ shared quality gates without documenting the reason.
 ## Commands
 
 - `mise install`: install mise-managed tools.
-- `mise run install`: install Python project dependencies.
+- `mise run install`: install this package and its dependencies.
 - `mise run lint-fast`: run edit-safe lint targets for active development.
 - `mise run lint`: run the full lint gate used by CI.
 - `mise run lint-full`: explicit name for the full lint gate.
@@ -22,8 +22,11 @@ shared quality gates without documenting the reason.
 
 - Use `jaq` instead of `jq` for JSON command-line work.
 - Python dependency and command execution goes through `uv`.
+- Hatchling builds the installed package from `src/{{ package_name }}`.
 - Project task orchestration and native CLI tooling go through `mise.toml`;
   run `mise install` before invoking native linters directly.
+- Docker and Hadolint are baseline. The Dockerfile deliberately keeps a
+  framework-neutral smoke command until the project chooses a runtime.
 {% if "jscpd" in extra_linters or "markdownlint" in extra_linters %}
 - Node-based lint CLIs are pinned in `mise.toml` through mise's npm backend
   and installed with `mise install`.

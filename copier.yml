@@ -31,33 +31,27 @@ project_name:
   help: Project directory and display name.
   default: my-project
   validator: >-
-    {% if not (project_name | regex_search('^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$')) %}
-    Use letters, digits, dots, underscores, and dashes (no spaces); start
-    and end with a letter or digit.
+    {% if (project_name | lower | replace('.', '_') | replace('-', '_')) in
+       ['and', 'as', 'assert', 'async', 'await', 'break', 'class', 'continue',
+        'def', 'del', 'elif', 'else', 'except',
+        'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
+        'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try',
+        'while', 'with', 'yield'] %}
+    The derived Python package name must not be a Python keyword.
+    {% elif not (project_name | regex_search('^[A-Za-z][A-Za-z0-9]*(?:[._-][A-Za-z0-9]+)*$')) %}
+    Start with a letter. Use letters and digits separated by single dots,
+    underscores, or dashes; do not end with a separator.
     {% endif %}
 
 package_name:
   type: str
-  help: Python import package name.
-  default: "{{ project_name | lower | replace('-', '_') | replace(' ', '_') }}"
-  validator: >-
-    {% if not (package_name | regex_search('^[a-z_][a-z0-9_]*$')) %}
-    Use a valid Python package name: lowercase letters, digits, and
-    underscores; start with a letter or underscore.
-    {% endif %}
+  default: "{{ project_name | lower | replace('.', '_') | replace('-', '_') }}"
+  when: false
 
 project_description:
   type: str
   help: Short project description for README and package metadata.
   default: Project description
-
-setup_mode:
-  type: str
-  help: Choose the setup path.
-  choices:
-    "Quick - recommended defaults: Python 3.14, Docker, GitHub Actions, all linters, MIT": quick
-    "Custom - configure features in depth": custom
-  default: quick
 
 python_version:
   type: str
@@ -73,7 +67,6 @@ python_version:
        or (python_version.split('.')[1] | int) < 10 %}
     3.10 is the oldest version supported by the dev toolchain
     {% endif %}
-  when: "{{ setup_mode == 'custom' }}"
 
 license:
   type: str
@@ -83,31 +76,16 @@ license:
     Proprietary: Proprietary
     "Skip - define later (no LICENSE file)": Skip
   default: MIT
-  when: "{{ setup_mode == 'custom' }}"
 
 author_name:
   type: str
-  help: Copyright holder for generated license files.
+  help: Copyright holder and optional Docker maintainer label.
   default: ""
-  when: "{{ setup_mode == 'custom' }}"
-
-is_package:
-  type: bool
-  help: Build and install the project package with hatchling.
-  default: false
-  when: "{{ setup_mode == 'custom' }}"
-
-use_docker:
-  type: bool
-  help: Include Dockerfile, Docker ignore file, and Hadolint gates.
-  default: true
-  when: "{{ setup_mode == 'custom' }}"
 
 use_github_actions:
   type: bool
   help: Include GitHub Actions CI and dependency update automation.
   default: true
-  when: "{{ setup_mode == 'custom' }}"
 
 extra_linters:
   type: str
@@ -121,7 +99,6 @@ extra_linters:
     - jscpd
     - typos
     - markdownlint
-  when: "{{ setup_mode == 'custom' }}"
 
 coverage_fail_under:
   type: int
@@ -131,7 +108,6 @@ coverage_fail_under:
     {% if coverage_fail_under < 0 or coverage_fail_under > 100 %}
     Use an integer from 0 to 100.
     {% endif %}
-  when: "{{ setup_mode == 'custom' }}"
 
 python_version_minor:
   type: str

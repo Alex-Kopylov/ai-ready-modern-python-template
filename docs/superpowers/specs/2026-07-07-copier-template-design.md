@@ -1,217 +1,232 @@
 # Copier-based template transformation — design spec
 
 Date: 2026-07-07
-Status: approved by user (layout, wizard scope, sample_db strategy, delivery
-confirmed via Q&A).
+
+Amended: 2026-07-10
+
+Status: approved by user
 
 ## Goal
 
-Transform `ai-ready-modern-python-template` into a
-[copier](https://copier.readthedocs.io/) template with a low-friction wizard:
+Transform `ai-ready-modern-python-template` into a Copier template for a
+universal, installable Python project. The wizard owns a small set of clear
+project choices. Every render includes packaging and Docker; a single switch
+controls the complete GitHub automation bundle.
 
-1. **Quick path** — user answers ~3 questions, gets recommended defaults.
-2. **Custom path** — user opts in to ~8 coarse feature questions.
-3. Everything finer-grained (individual lint rules, tool configs) remains a
-   direct file edit after generation — NOT a wizard question.
+The generated starter is framework-neutral. It has no FastAPI, Uvicorn, or
+other application-framework dependency, configuration, entrypoint, or Docker
+launch command. Ruff's `FAST` rule family remains lint policy and does not
+install a framework.
 
-Then validate by adopting the template into an existing real project,
-`github.com/Alex-Kopylov/sample_db`, delivered as a branch + PR.
+## Part 1 — Template repository
 
-## Part 1 — Template repo restructure
+### Layout
 
-### Layout (`_subdirectory: template`)
+`copier.yml` renders the contents of `template/`. Root documentation, CI, and
+test scripts describe and validate the template itself.
 
-```
+```text
 repo root/
-├── copier.yml                  # wizard definition
-├── README.md                   # template usage docs (rewritten)
-├── LICENSE                     # template's own MIT license
-├── AGENTS.md                   # template-development instructions (rewritten)
+├── copier.yml
+├── README.md
+├── AGENTS.md
 ├── docs/
-│   ├── other-modern-python-tools.md   # stays at root (template-level doc)
-│   └── superpowers/specs/...          # this spec
+│   ├── other-modern-python-tools.md
+│   └── superpowers/specs/2026-07-07-copier-template-design.md
 ├── scripts/
-│   └── test-generation.sh      # generate + gate a project locally; used by CI
-├── tests/fixtures/
-│   └── answers-*.yml           # template-generation matrix inputs
-├── .github/workflows/ci.yml    # template CI (see below)
-└── template/                   # everything a generated project receives
+│   ├── test-render-contracts.sh
+│   └── test-generation.sh
+├── .github/workflows/ci.yml
+└── template/
     ├── pyproject.toml.jinja
     ├── mise.toml.jinja
     ├── .pre-commit-config.yaml.jinja
     ├── README.md.jinja
     ├── AGENTS.md.jinja
-    ├── .python-version.jinja
-    ├── .copier-answers.yml.jinja
-    ├── LICENSE handling (conditional, see below)
-    ├── docs/lint-strategy.md            # moves here (referenced by AGENTS.md)
-    ├── .ruff.toml, .flake8, .yamllint, taplo.toml, .vulture.toml,
-    │   .bandit, .shellcheckrc, .pytest.ini, .gitignore   # verbatim copies
-    ├── src/{{ package_name }}/{__init__.py, main.py}
-    ├── tests/{__init__.py, unit/__init__.py,
-    │          unit/{{ package_name }}/{__init__.py, test_main.py}}
-    ├── conditional: Dockerfile, .dockerignore, .hadolint.yaml
-    ├── conditional: .github/ (workflows/ci.yml.jinja, dependabot.yml.jinja,
-    │                zizmor.yml), renovate.json5
-    ├── conditional: .jscpd.json
-    └── conditional: .markdownlint.jsonc, .markdownlint-cli2.jsonc
+    ├── Dockerfile.jinja
+    ├── .dockerignore.jinja
+    ├── .hadolint.yaml.jinja
+    ├── src/{{ package_name }}/
+    ├── tests/unit/{{ package_name }}/
+    ├── conditional GitHub automation
+    ├── conditional LICENSE
+    └── conditional optional-linter configuration
 ```
 
-- `uv.lock` is **not** templated. Generated projects create it via
-  `uv sync`/`uv lock`. Delete root generated-project `uv.lock`, `src/`, Python
-  tests, `pyproject.toml` etc. as they move into `template/`; keep only
-  template-generation answer sets under root `tests/fixtures/`.
-- Conditional files use copier filename conditions, e.g.
-  `{% if use_docker %}Dockerfile{% endif %}` and
-  `{% if use_github_actions %}.github{% endif %}/…`.
+Generated projects create `uv.lock` on their first sync. The root template does
+not carry a generated-project lockfile, Python project metadata, source tree, or
+Python test suite.
 
-### copier.yml
+Copier filename conditions are limited to genuinely optional files:
 
-Settings: `_subdirectory: template`, `_answers_file: .copier-answers.yml`,
-`_min_copier_version` set to the lowest version supporting `multiselect`
-choices (verify against copier docs; believed 9.x — check).
+- MIT `LICENSE`;
+- `.github/workflows/ci.yml`, `.github/dependabot.yml`, `.github/zizmor.yml`,
+  and `renovate.json5`;
+- jscpd and markdownlint configuration.
 
-**Always asked:**
+### Wizard
 
-| question | type | default |
-|---|---|---|
-| `project_name` | str, validated non-empty | placeholder `my-project` |
-| `package_name` | str, validated `^[a-z_][a-z0-9_]*$` | derived: `{{ project_name \| lower \| replace('-', '_') \| replace(' ', '_') }}` |
-| `project_description` | str | `"Project description"` |
-| `setup_mode` | choice: `quick` ("Quick — recommended defaults: Python 3.14, Docker, GitHub Actions, all linters, MIT") / `custom` ("Custom — configure features in depth") | `quick` |
+The visible questions are:
 
-**Custom-only** (each has `when: "{{ setup_mode == 'custom' }}"`; defaults
-apply silently in quick mode):
+| Question | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `project_name` | string | `my-project` | Distribution and display name |
+| `project_description` | string | `Project description` | README and metadata |
+| `python_version` | string | `3.14` | Python, mise, Ruff, ty, and Docker |
+| `license` | choice | `MIT` | MIT, Proprietary, or Skip |
+| `author_name` | string | empty | License owner and optional Docker maintainer |
+| `use_github_actions` | boolean | `true` | Complete GitHub automation bundle |
+| `extra_linters` | multiselect | all | jscpd, typos, and markdownlint |
+| `coverage_fail_under` | integer | `80` | Coverage threshold; zero disables it |
 
-| question | type | default | drives |
-|---|---|---|---|
-| `python_version` | str, validated `^3\.\d+(\.\d+)?$` and minor `>= 10`; accepts a minor like `3.13` or exact patch like `3.13.2` | 3.14 | `requires-python`, ty env, mise pin, `.python-version` |
-| `license` | choice MIT / Proprietary / Skip | MIT | pyproject `license`, LICENSE file presence/content; Skip means define later and do not create a LICENSE file |
-| `author_name` | str | `""` (falls back to `project_name` in LICENSE) | MIT LICENSE copyright line |
-| `is_package` | bool | `false` | hatchling `[build-system]` + wheel target vs virtual project |
-| `use_docker` | bool | `true` | Dockerfile, .dockerignore, .hadolint.yaml, hadolint tool/task/hook |
-| `use_github_actions` | bool | `true` | `.github/`, renovate.json5, actionlint/zizmor/check-jsonschema tool/tasks/hooks |
-| `extra_linters` | multiselect: jscpd / typos / markdownlint | all selected | tool pins, tasks, hooks, config files per selection |
-| `coverage_fail_under` | int | `80` | `[tool.coverage.report] fail_under` (omit/comment when 0) |
+`project_name` must match:
 
-**Computed (hidden, `when: false`):** `python_version_minor` keeps the first two
-components for metadata, while `python_version_pin` passes exact patch answers
-through and maps known minor answers to pinned patches for mise/.python-version.
+```text
+^[A-Za-z][A-Za-z0-9]*(?:[._-][A-Za-z0-9]+)*$
+```
 
-**Post-copy message** (`_message_after_copy`): next steps — `cd`, `git init`
-+ initial commit, `mise install`, `mise run install`, `mise run
-install-hooks`, `mise run lint`, note that `uv.lock` gets created on first
-sync and should be committed. No `_tasks` — keep generation side-effect-free.
+It therefore begins with a letter, uses only letters and digits separated by a
+single dot, underscore, or dash, and never ends with a separator. The derived
+import name must not be a Python keyword.
 
-### Jinja templating of project files
+`package_name` is hidden computed state. It lowercases `project_name` and maps
+dots and dashes to underscores:
 
-- `pyproject.toml.jinja`: name/description/requires-python/license from
-  answers; `check-jsonschema` dev dep only when `use_github_actions`;
-  omit project license metadata when license is Skip;
-  conditional `[build-system]` (hatchling) + `[tool.hatch.build.targets.wheel]
-  packages = ["src/{{ package_name }}"]` when `is_package`, otherwise keep the
-  virtual-project comment; `[tool.ty.environment]` python-version;
-  coverage `fail_under` when > 0.
-- `mise.toml.jinja`: python pin; node + npm:jscpd / npm:markdownlint-cli2
-  pins only when the respective linters are selected (drop node entirely when
-  neither is); hadolint only when `use_docker`; actionlint/zizmor only when
-  `use_github_actions`. Task groups `lint-fast`/`lint-full` include only the
-  tasks that exist. Keep TOML valid under all combinations.
-- `.pre-commit-config.yaml.jinja`: conditionally include hadolint,
-  actionlint, zizmor, check-jsonschema-github-workflows, jscpd, typos hooks.
-- `README.md.jinja`: rewritten for a *generated project* — project name
-  heading, description, quick start. Template-marketing prose stays in the
-  root README instead.
-- `AGENTS.md.jinja`: replace "this is a new repository template" framing with
-  generated-project framing; command list reflects enabled features.
-- LICENSE: `{% if license == 'MIT' %}LICENSE{% endif %}.jinja` with MIT text,
-  year 2026, holder `author_name or project_name`; Proprietary and Skip do not
-  create a LICENSE file.
-- `.copier-answers.yml.jinja`: standard
-  `# Changes here will be overwritten by Copier` +
-  `{{ _copier_answers|to_nice_yaml -}}`.
+```text
+My-Service → my_service
+billing.api → billing_api
+```
 
-### Template CI (root `.github/workflows/ci.yml`)
+Hidden `python_version_minor` supplies metadata, Ruff, ty, and the Docker base
+tag. Hidden `python_version_pin` preserves exact patch answers and maps known
+minor answers to reproducible mise pins.
 
-Replaces the current project CI. Jobs:
+### Packaging
 
-1. **lint-template**: yamllint on copier.yml + workflows, actionlint, zizmor.
-2. **generate-and-gate** (matrix): four answer sets —
-   `defaults` (quick mode), `everything-off` (custom: no docker, no GHA, no
-   extra linters, Skip, 3.10), `everything-on` (custom: all on, package mode,
-   coverage 80, 3.13), and `github-actions-no-docker` (custom: GHA on, Docker
-   off, Proprietary, 3.12). For each: `uvx copier copy --defaults
-   --data-file <answers.yml> . /tmp/gen`, then inside: `git init` + commit
-   (gitleaks needs history), `mise trust && mise install`, `mise run install`,
-   `mise run lint`, `mise run test`, and `mise run
-   test-cov`. The matrix must prove that each covered feature combination
-   yields valid TOML/YAML and a passing gate.
+Every generated `pyproject.toml` contains:
 
-`scripts/test-generation.sh` wraps the per-matrix-entry steps so it can run
-locally too.
+```toml
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+```
 
-### Root README rewrite
+Hatchling discovers `src/{{ package_name }}` from the deterministic relationship
+between the normalized distribution name and import package. There is no
+explicit wheel-package table. Pytest does not inject `src` onto `sys.path`, so
+the suite exercises the installed project.
 
-Usage: `uvx copier copy gh:Alex-Kopylov/ai-ready-modern-python-template
-my-project` (note: copier resolves the latest git tag; tag `v1.0.0` after
-merge — include a "Releasing" note in AGENTS.md). Document quick vs custom,
-the update workflow (`uvx copier update`), adopting an existing project
-(`copier copy` into it, review `git diff`), and the philosophy: coarse
-toggles in the wizard, fine tuning via file edits.
+License behavior remains:
 
-## Part 2 — sample_db adoption (separate repo, branch + PR)
+- MIT creates `LICENSE` and `project.license = "MIT"`; the holder is
+  `author_name` or falls back to `project_name`.
+- Proprietary creates no file and uses `LicenseRef-Proprietary` metadata.
+- Skip creates no file and emits no project license metadata.
 
-Clone `github.com/Alex-Kopylov/sample_db` to
-`~/PycharmProjects/sample_db`, branch `adopt-ai-template`.
+### Docker baseline
 
-Run the wizard from the local template checkout:
-`uvx copier copy --vcs-ref=HEAD --data …` with answers: project_name
-`sample-db`, package_name `sample_db`, custom mode, python 3.12 (deps
-require it), MIT, `is_package: true` (keeps hatchling), docker on, GHA on,
-all extra linters, coverage 0.
+Every project receives `Dockerfile`, `.dockerignore`, and `.hadolint.yaml`.
+Hadolint is always pinned in `mise.toml`, represented by `lint-dockerfile`, and
+installed as a prek hook. The generated README always documents the Docker
+build command.
 
-Merge strategy:
+The Dockerfile:
 
-- **pyproject.toml**: keep their `[project]` dependencies and hatchling
-  build config; adopt template dev-group additions (deptry, bandit, prek,
-  yamllint, check-jsonschema, pytest-xdist, pytest-cov) alongside their
-  existing dev deps (langgraph-cli stays). Move their inline
-  `[tool.vulture]` to `.vulture.toml` (template convention).
-- **Dockerfile / docker-compose**: keep theirs (domain-specific);
-  hadolint gate applies to it — fix findings or add targeted ignores in
-  `.hadolint.yaml`.
-- **Makefile → mise, full migration**: port ALL targets (setup, lint,
-  format, db, test, run, e2e, docker-build/up/down/clean/logs/psql/
-  validate-rls/docker-e2e) into `mise.toml` tasks, then delete the
-  Makefile. Preserve behavior incl. env defaults (HOST/PORT/E2E_PORT,
-  UV_CACHE_DIR) via mise task env or `[env]`. Update README.md and
-  HOW_TO_TEST_IT_WORKS.md references from `make x` to `mise run x`.
-- **CI**: replace with the template's mise-based ci.yml.
-- **Configs**: adopt template `.ruff.toml`, `.flake8`, `.yamllint`, etc.,
-  reconciling with their existing `.ruff.toml`/`.flake8` (prefer template
-  strictness; keep their genuinely needed excludes).
-- **Lint fallout**: run `mise run lint` + `mise run test`; fix findings.
-  Prefer targeted config excludes over large code churn (e.g. jscpd
-  threshold/excludes for generated-looking code, typos allowlist,
-  vulture whitelist). `uv audit` CVEs in their deps: upgrade patch-level
-  where safe, otherwise document in the PR body rather than force
-  upgrades. gitleaks scans history — if it flags something real, surface
-  it in the PR body, do NOT rewrite history.
-- Add `.copier-answers.yml` so sample_db can `copier update` later.
+- uses the selected Python minor;
+- emits a maintainer label only when `author_name` is set;
+- performs a dependency-only `uv sync` before copying source;
+- performs a second `uv sync` that installs the current package;
+- retains a neutral Python-version smoke `CMD` until the project chooses its
+  real application runtime.
 
-Deliverable: pushed branch + PR on sample_db with a body explaining what
-was adopted, what was intentionally kept, and any surfaced issues.
+When GitHub automation is enabled, Dependabot always includes its Docker
+ecosystem block because the Dockerfile always exists.
+
+### GitHub automation
+
+`use_github_actions` is the only structural switch. When enabled it renders:
+
+- `.github/workflows/ci.yml`;
+- `.github/dependabot.yml`;
+- `.github/zizmor.yml`;
+- `renovate.json5`;
+- the `check-jsonschema` development dependency;
+- actionlint and zizmor tool pins, tasks, and prek hooks.
+
+When disabled, none of those artifacts or operational references remain. The
+Docker and Hadolint baseline is unchanged.
+
+### Optional lint and coverage choices
+
+The `extra_linters` multiselect directly controls jscpd, typos, and markdownlint
+tools, tasks, hooks, and configuration files. An empty selection remains valid
+and leaves no dangling task references.
+
+`coverage_fail_under` accepts integers from 0 through 100. Positive values emit
+the coverage gate; zero omits the active `fail_under` setting.
+
+### Validation scripts and root CI
+
+`scripts/test-render-contracts.sh` performs fast renders without installing the
+generated toolchain. It covers:
+
+- Proprietary and Skip licenses;
+- Python 3.10 and an exact patch version;
+- disabled coverage gate;
+- empty optional-linter selection;
+- name normalization;
+- invalid and keyword-derived names;
+- complete GitHub automation on/off behavior;
+- unconditional packaging, Docker, and Hadolint.
+
+`scripts/test-generation.sh` accepts exactly two scenario names:
+
+- `github-actions-on`: true wizard defaults;
+- `github-actions-off`: the same defaults with only GitHub automation disabled.
+
+Both scenarios render, initialize Git history, install mise tools, sync the
+project, import `my_project`, run `uv build`, and pass lint, test, and coverage.
+Root CI runs the render contracts and the two named scenarios, optionally as a
+scenario matrix.
+
+### Documentation
+
+The root README explains generation, the compact wizard, updates, adoption, and
+the three validation commands. Generated documentation describes the project,
+its always-available Docker path, and only the automation that was rendered.
+
+## Part 2 — `sample_db` adoption
+
+Adoption into `github.com/Alex-Kopylov/sample_db` remains a separate repository,
+branch, and PR. Render from the local template with these project choices:
+
+- project name `sample-db` (import package derives to `sample_db`);
+- Python 3.12;
+- MIT license;
+- GitHub automation enabled;
+- all optional linters;
+- coverage threshold zero.
+
+Docker is already part of the baseline. Preserve `sample_db`'s domain-specific
+Dockerfile and compose behavior while adopting the shared Hadolint gate.
+
+Keep its runtime dependencies and Hatchling metadata, port all Makefile behavior
+to mise tasks, reconcile strict lint configuration with targeted exclusions,
+replace CI with the generated mise-based workflow, and retain
+`.copier-answers.yml` for future updates.
 
 ## Verification
 
-- Template repo: `scripts/test-generation.sh` passes locally for all four
-  matrix answer sets; template CI green on the PR.
-- sample_db: `mise run lint` and `mise run test` pass locally on the
-  branch; its CI green on the PR.
+- `scripts/test-render-contracts.sh` passes.
+- `scripts/test-generation.sh github-actions-on` passes.
+- `scripts/test-generation.sh github-actions-off` passes.
+- Root CI is green.
+- The separate `sample_db` branch passes its lint and test gates when that
+  adoption is explicitly undertaken.
 
 ## Out of scope
 
-- Publishing to a template index; docs sites.
-- Changing the template's linter selection/strictness (transform, don't
-  redesign).
-- sample_db functional changes beyond what gates require.
+- Selecting an application framework or runtime command.
+- Publishing to a template index or adding a documentation site.
+- Redesigning the linter policy.
+- Functional changes to downstream projects beyond what their gates require.

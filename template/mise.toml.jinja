@@ -17,9 +17,7 @@ node = "22.22.0"
 {% endif -%}
 "aqua:01mf02/jaq" = "2.3.0"
 "aqua:gitleaks/gitleaks" = "8.30.1"
-{% if use_docker -%}
 "aqua:hadolint/hadolint" = "2.14.0"
-{% endif -%}
 "aqua:koalaman/shellcheck" = "0.11.0"
 {% if use_github_actions -%}
 "aqua:rhysd/actionlint" = "1.7.11"
@@ -61,7 +59,7 @@ run = "uv run check-jsonschema --builtin-schema github-workflows .github/workflo
 
 {% endif -%}
 [tasks.install]
-description = "Install Python project dependencies"
+description = "Install the project and its dependencies"
 run = "uv sync --all-extras"
 
 [tasks.lint]
@@ -75,9 +73,7 @@ description = "Run fast, edit-safe linters"
 run = [
   { tasks = [
     "lint-python-fast",
-    {% if use_docker -%}
     "lint-dockerfile",
-    {% endif -%}
     {% if "markdownlint" in extra_linters -%}
     "lint-md",
     {% endif -%}
@@ -135,12 +131,10 @@ run = [
   "uv run vulture --config .vulture.toml",
 ]
 
-{% if use_docker -%}
 [tasks.lint-dockerfile]
 description = "Lint Dockerfiles with Hadolint"
 run = "mise exec -- hadolint Dockerfile"
 
-{% endif -%}
 {% if "markdownlint" in extra_linters -%}
 [tasks.lint-md]
 description = "Lint Markdown files"

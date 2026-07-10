@@ -10,7 +10,9 @@
   // Paths to lint
   "globs": [
     "*.md",
+{% if use_github_actions %}
     ".github/**/*.md",
+{% endif %}
     "docs/**/*.md",
     "README.md",
     "CONTRIBUTING.md",
