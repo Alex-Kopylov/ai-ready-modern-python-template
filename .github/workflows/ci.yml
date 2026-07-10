@@ -16,8 +16,34 @@ permissions:
   contents: read
 
 jobs:
-  lint:
+  lint-template:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+      - uses: jdx/mise-action@v4.2.0
+        with:
+          github_token: ${{ github.token }}
+      - run: uvx --from yamllint yamllint -c template/.yamllint copier.yml .github/workflows/ci.yml tests/fixtures/*.yml
+      - run: mise exec aqua:rhysd/actionlint@1.7.11 -- actionlint .github/workflows/ci.yml
+      - run: mise exec aqua:zizmorcore/zizmor@1.25.2 -- zizmor .github/workflows/ci.yml
+
+  generate-and-gate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        answers:
+          - tests/fixtures/answers-defaults.yml
+          - tests/fixtures/answers-everything-off.yml
+          - tests/fixtures/answers-everything-on.yml
+          - tests/fixtures/answers-github-actions-no-docker.yml
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
@@ -31,24 +57,4 @@ jobs:
       - uses: jdx/mise-action@v4.2.0
         with:
           github_token: ${{ github.token }}
-      - run: uv lock --check
-      - run: uv sync --all-extras --locked
-      - run: mise run lint
-
-  test:
-    runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
-    steps:
-      - uses: actions/checkout@v7.0.0
-        with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@v8.2.0
-        with:
-          enable-cache: true
-      - uses: jdx/mise-action@v4.2.0
-        with:
-          github_token: ${{ github.token }}
-      - run: uv lock --check
-      - run: uv sync --all-extras --locked
-      - run: mise run test-cov
+      - run: scripts/test-generation.sh "${{ matrix.answers }}"

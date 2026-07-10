@@ -1,9 +1,13 @@
 [project]
-name = "ai-template"
+name = "{{ project_name | lower }}"
 version = "0.1.0"
-description = "Project description"
-requires-python = ">=3.14"
-license = "MIT"
+description = {{ project_description | tojson }}
+requires-python = ">={{ python_version_minor }}"
+{% if license == 'MIT' -%}
+license = "{{ license }}"
+{% elif license == 'Proprietary' -%}
+license = "LicenseRef-Proprietary"
+{% endif -%}
 dependencies = []
 
 [dependency-groups]
@@ -19,21 +23,32 @@ dev = [
   # Testing
   "pytest",
   "pytest-xdist",
+  "pytest-cov>=7.1.0",
   # Git hooks
   "prek",
   # YAML linting
   "yamllint",
+  {% if use_github_actions -%}
   # JSON schema validation
   "check-jsonschema",
-  "pytest-cov>=7.1.0",
+  {% endif -%}
 ]
 
+{% if is_package -%}
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{{ package_name }}"]
+{% else -%}
 # No [build-system]: uv treats this as a virtual project (deps only, the
 # project itself is not built or installed). Restore hatchling + a wheel
 # target once src/ gains a real package.
+{% endif %}
 
 [tool.ty.environment]
-python-version = "3.14"
+python-version = "{{ python_version_minor }}"
 
 [tool.coverage.run]
 source = ["src"]
@@ -42,5 +57,9 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
+{% if coverage_fail_under > 0 -%}
+fail_under = {{ coverage_fail_under }}
+{% else -%}
 # Raise once the project grows real code:
 # fail_under = 80
+{% endif %}

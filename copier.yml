@@ -1,0 +1,157 @@
+_subdirectory: template
+_answers_file: .copier-answers.yml
+_min_copier_version: "9.1.0"
+
+# Explicit jinja whitespace behavior: copier's defaults changed across
+# releases (9.16 stopped trimming block-tag lines), which silently broke
+# rendered markdown/TOML whitespace. Every .jinja file here is authored
+# against these values.
+_envops:
+  trim_blocks: true
+  lstrip_blocks: true
+  keep_trailing_newline: true
+
+_message_after_copy: |
+  Next steps:
+
+    cd {{ _copier_conf.dst_path }}
+    git init
+    git add .
+    git commit -m "chore: initial project from template"
+    mise install
+    mise run install
+    mise run install-hooks
+    mise run lint
+
+  The project intentionally starts without uv.lock. The first sync or lock
+  command creates it; commit uv.lock with the generated project.
+
+project_name:
+  type: str
+  help: Project directory and display name.
+  default: my-project
+  validator: >-
+    {% if not (project_name | regex_search('^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$')) %}
+    Use letters, digits, dots, underscores, and dashes (no spaces); start
+    and end with a letter or digit.
+    {% endif %}
+
+package_name:
+  type: str
+  help: Python import package name.
+  default: "{{ project_name | lower | replace('-', '_') | replace(' ', '_') }}"
+  validator: >-
+    {% if not (package_name | regex_search('^[a-z_][a-z0-9_]*$')) %}
+    Use a valid Python package name: lowercase letters, digits, and
+    underscores; start with a letter or underscore.
+    {% endif %}
+
+project_description:
+  type: str
+  help: Short project description for README and package metadata.
+  default: Project description
+
+setup_mode:
+  type: str
+  help: Choose the setup path.
+  choices:
+    "Quick - recommended defaults: Python 3.14, Docker, GitHub Actions, all linters, MIT": quick
+    "Custom - configure features in depth": custom
+  default: quick
+
+python_version:
+  type: str
+  help: >-
+    Python version for requires-python, ty, mise, and .python-version. Use a
+    minor version like 3.13 (mise resolves the latest patch) or an exact
+    patch version like 3.13.2.
+  default: "3.14"
+  # Floor computed from requires-python of the latest dev toolchain deps:
+  # deptry, pytest, yamllint, and check-jsonschema all require >=3.10.
+  validator: >-
+    {% if not (python_version | regex_search('^3\.\d+(\.\d+)?$'))
+       or (python_version.split('.')[1] | int) < 10 %}
+    3.10 is the oldest version supported by the dev toolchain
+    {% endif %}
+  when: "{{ setup_mode == 'custom' }}"
+
+license:
+  type: str
+  help: Project license; choose Skip to define it after generation.
+  choices:
+    MIT: MIT
+    Proprietary: Proprietary
+    "Skip - define later (no LICENSE file)": Skip
+  default: MIT
+  when: "{{ setup_mode == 'custom' }}"
+
+author_name:
+  type: str
+  help: Copyright holder for generated license files.
+  default: ""
+  when: "{{ setup_mode == 'custom' }}"
+
+is_package:
+  type: bool
+  help: Build and install the project package with hatchling.
+  default: false
+  when: "{{ setup_mode == 'custom' }}"
+
+use_docker:
+  type: bool
+  help: Include Dockerfile, Docker ignore file, and Hadolint gates.
+  default: true
+  when: "{{ setup_mode == 'custom' }}"
+
+use_github_actions:
+  type: bool
+  help: Include GitHub Actions CI and dependency update automation.
+  default: true
+  when: "{{ setup_mode == 'custom' }}"
+
+extra_linters:
+  type: str
+  help: Optional lint families to include.
+  multiselect: true
+  choices:
+    jscpd: jscpd
+    typos: typos
+    markdownlint: markdownlint
+  default:
+    - jscpd
+    - typos
+    - markdownlint
+  when: "{{ setup_mode == 'custom' }}"
+
+coverage_fail_under:
+  type: int
+  help: Minimum coverage percentage; 0 leaves the coverage gate off.
+  default: 80
+  validator: >-
+    {% if coverage_fail_under < 0 or coverage_fail_under > 100 %}
+    Use an integer from 0 to 100.
+    {% endif %}
+  when: "{{ setup_mode == 'custom' }}"
+
+python_version_minor:
+  type: str
+  default: "{{ python_version.split('.')[:2] | join('.') }}"
+  when: false
+
+python_version_pin:
+  type: str
+  # Exact patch versions pass through verbatim; known minors map to pinned
+  # patches; any other minor passes through and mise resolves the latest patch.
+  default: >-
+    {% if python_version.split('.') | length == 3 -%}
+    {{ python_version }}
+    {%- elif python_version == '3.12' -%}
+    3.12.13
+    {%- elif python_version == '3.13' -%}
+    3.13.14
+    {%- elif python_version == '3.14' -%}
+    3.14.6
+    {%- else -%}
+    {{ python_version }}
+    {%- endif %}
+  when: false

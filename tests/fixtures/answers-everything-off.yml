@@ -1,0 +1,16 @@
+# CI matrix fixture: custom mode with every optional feature disabled.
+# python_version 3.10 is deliberate: it gates the wizard's floor (oldest
+# version the dev toolchain supports); defaults leg covers 3.14,
+# everything-on covers 3.13 — do not "align" these.
+project_name: generated-everything-off
+package_name: generated_everything_off
+project_description: Generated project with optional features disabled
+setup_mode: custom
+python_version: "3.10"
+license: Skip
+author_name: ""
+is_package: false
+use_docker: false
+use_github_actions: false
+extra_linters: []
+coverage_fail_under: 0

@@ -1,0 +1,47 @@
+# {{ project_name }}
+
+{{ project_description }}
+
+## Quick Start
+
+```bash
+mise install
+mise run install
+mise run install-hooks
+mise run lint
+mise run test
+```
+
+`uv.lock` is created during the first dependency sync. Commit it with the
+project so CI and local installs use the same resolved dependencies.
+
+## Commands
+
+- `mise run install`: install Python project dependencies.
+- `mise run lint-fast`: run edit-safe lint targets for active development.
+- `mise run lint`: run the full lint gate used by CI.
+- `mise run lint-full`: explicit name for the full lint gate.
+- `mise run format`: apply Ruff formatting and autofixes for `src`.
+- `mise run test`: run the pytest suite under `tests`.
+- `mise run test-cov`: run the pytest suite with a coverage report.
+- `mise run install-hooks`: install prek-managed pre-commit and pre-push hooks.
+{% if use_docker %}
+
+## Docker
+
+```bash
+docker build -t {{ project_name }} .
+```
+{% endif %}
+{% if use_github_actions %}
+
+## CI
+
+GitHub Actions runs `mise run lint` and `mise run test-cov`. Commit `uv.lock`
+after the first local sync before relying on CI.
+{% endif %}
+
+## Lint Strategy
+
+See [docs/lint-strategy.md](docs/lint-strategy.md) for the fast-vs-full lint
+contract and hook placement rules.

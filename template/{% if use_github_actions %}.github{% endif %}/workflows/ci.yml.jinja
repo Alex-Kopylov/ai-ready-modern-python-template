@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - "**"
+
+concurrency:
+  group: {% raw %}${{ github.workflow }}-${{ github.ref }}{% endraw +%}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: {% raw %}${{ github.token }}{% endraw +%}
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+      - uses: jdx/mise-action@v4.2.0
+        with:
+          github_token: {% raw %}${{ github.token }}{% endraw +%}
+      - run: uv lock --check
+      - run: uv sync --all-extras --locked
+      - run: mise run lint
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: {% raw %}${{ github.token }}{% endraw +%}
+    steps:
+      - uses: actions/checkout@v7.0.0
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+      - uses: jdx/mise-action@v4.2.0
+        with:
+          github_token: {% raw %}${{ github.token }}{% endraw +%}
+      - run: uv lock --check
+      - run: uv sync --all-extras --locked
+      - run: mise run test-cov

@@ -1,4 +1,4 @@
-target-version = "py314"
+target-version = "py{{ python_version_minor | replace('.', '') }}"
 line-length = 120
 src = ["src", "tests"]
 exclude = [".venv", "build", "dist"]
@@ -74,7 +74,7 @@ max-returns = 6         # PLR0911: too-many-return-statements
 max-nested-blocks = 5   # PLR1702: too-many-nested-blocks (preview)
 
 [lint.isort]
-known-first-party = ["app"]
+known-first-party = ["{{ package_name }}"]
 
 
 [lint.per-file-ignores]
