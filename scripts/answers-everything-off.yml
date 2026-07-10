@@ -7,7 +7,7 @@ package_name: generated_everything_off
 project_description: Generated project with optional features disabled
 setup_mode: custom
 python_version: "3.10"
-license: Proprietary
+license: Skip
 author_name: ""
 is_package: false
 use_docker: false

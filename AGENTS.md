@@ -18,6 +18,9 @@ worktree unless that is explicitly requested as a separate task.
   gate the custom project with optional features disabled.
 - `scripts/test-generation.sh scripts/answers-everything-on.yml`: generate and
   gate the custom project with optional features enabled.
+- `scripts/test-generation.sh scripts/answers-github-actions-no-docker.yml`:
+  generate and gate the mixed project with GitHub Actions enabled and Docker
+  disabled.
 
 Inside a generated project, the standard commands are:
 

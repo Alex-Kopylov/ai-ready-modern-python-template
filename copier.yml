@@ -77,10 +77,11 @@ python_version:
 
 license:
   type: str
-  help: Project license; other licenses are a post-generation file edit.
+  help: Project license; choose Skip to define it after generation.
   choices:
     MIT: MIT
     Proprietary: Proprietary
+    "Skip - define later (no LICENSE file)": Skip
   default: MIT
   when: "{{ setup_mode == 'custom' }}"
 

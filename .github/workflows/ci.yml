@@ -43,6 +43,7 @@ jobs:
           - scripts/answers-defaults.yml
           - scripts/answers-everything-off.yml
           - scripts/answers-everything-on.yml
+          - scripts/answers-github-actions-no-docker.yml
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:

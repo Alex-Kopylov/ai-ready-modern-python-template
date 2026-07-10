@@ -19,10 +19,10 @@ is tagged, use a local checkout or pass an explicit VCS ref.
   mode, then applies the recommended defaults: Python 3.14, MIT license,
   Docker, GitHub Actions, and all optional linters.
 - Custom mode adds coarse feature choices for the Python version (any 3.10+,
-  default 3.14; minor like `3.13` or exact patch like `3.13.2`), license (MIT
-  or Proprietary; anything else is a post-generation `LICENSE` edit), package
-  build metadata, Docker, GitHub Actions, optional lint families, and coverage
-  fail-under.
+  default 3.14; minor like `3.13` or exact patch like `3.13.2`), license (MIT,
+  Proprietary, or Skip to define it later without generating a `LICENSE` file),
+  package build metadata, Docker, GitHub Actions, optional lint families, and
+  coverage fail-under.
 
 Fine-grained tuning stays in generated files. Edit `mise.toml`, `pyproject.toml`,
 lint configs, hooks, or CI after generation instead of expanding the wizard for
@@ -78,6 +78,7 @@ Use the local generation matrix before opening a PR:
 scripts/test-generation.sh scripts/answers-defaults.yml
 scripts/test-generation.sh scripts/answers-everything-off.yml
 scripts/test-generation.sh scripts/answers-everything-on.yml
+scripts/test-generation.sh scripts/answers-github-actions-no-docker.yml
 ```
 
-Root CI runs template linting plus the same three generated-project gates.
+Root CI runs template linting plus the same four generated-project gates.

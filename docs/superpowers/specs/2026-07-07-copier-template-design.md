@@ -49,7 +49,7 @@ repo root/
     ├── tests/{__init__.py, unit/__init__.py,
     │          unit/{{ package_name }}/{__init__.py, test_main.py}}
     ├── conditional: Dockerfile, .dockerignore, .hadolint.yaml
-    ├── conditional: .github/ (workflows/ci.yml.jinja, dependabot.yml,
+    ├── conditional: .github/ (workflows/ci.yml.jinja, dependabot.yml.jinja,
     │                zizmor.yml), renovate.json5
     ├── conditional: .jscpd.json
     └── conditional: .markdownlint.jsonc, .markdownlint-cli2.jsonc
@@ -82,19 +82,18 @@ apply silently in quick mode):
 
 | question | type | default | drives |
 |---|---|---|---|
-| `python_version` | choice 3.12 / 3.13 / 3.14 | 3.14 | `requires-python`, ty env, mise pin, `.python-version` |
-| `license` | choice MIT / Apache-2.0 / Proprietary | MIT | pyproject `license`, LICENSE file presence/content |
-| `author_name` | str | `""` (falls back to `project_name` in LICENSE) | LICENSE copyright line |
+| `python_version` | str, validated `^3\.\d+(\.\d+)?$` and minor `>= 10`; accepts a minor like `3.13` or exact patch like `3.13.2` | 3.14 | `requires-python`, ty env, mise pin, `.python-version` |
+| `license` | choice MIT / Proprietary / Skip | MIT | pyproject `license`, LICENSE file presence/content; Skip means define later and do not create a LICENSE file |
+| `author_name` | str | `""` (falls back to `project_name` in LICENSE) | MIT LICENSE copyright line |
 | `is_package` | bool | `false` | hatchling `[build-system]` + wheel target vs virtual project |
 | `use_docker` | bool | `true` | Dockerfile, .dockerignore, .hadolint.yaml, hadolint tool/task/hook |
 | `use_github_actions` | bool | `true` | `.github/`, renovate.json5, actionlint/zizmor/check-jsonschema tool/tasks/hooks |
 | `extra_linters` | multiselect: jscpd / typos / markdownlint | all selected | tool pins, tasks, hooks, config files per selection |
-| `coverage_fail_under` | int | `0` (= gate off) | `[tool.coverage.report] fail_under` (omit/comment when 0) |
+| `coverage_fail_under` | int | `80` | `[tool.coverage.report] fail_under` (omit/comment when 0) |
 
-**Computed (hidden, `when: false`):** `python_version_pin` mapping minor →
-exact patch for mise/.python-version (e.g. `{'3.12': '3.12.x', '3.13':
-'3.13.x', '3.14': '3.14.6'}` — resolve current latest patches via
-`mise ls-remote python` at implementation time).
+**Computed (hidden, `when: false`):** `python_version_minor` keeps the first two
+components for metadata, while `python_version_pin` passes exact patch answers
+through and maps known minor answers to pinned patches for mise/.python-version.
 
 **Post-copy message** (`_message_after_copy`): next steps — `cd`, `git init`
 + initial commit, `mise install`, `mise run install`, `mise run
@@ -105,6 +104,7 @@ sync and should be committed. No `_tasks` — keep generation side-effect-free.
 
 - `pyproject.toml.jinja`: name/description/requires-python/license from
   answers; `check-jsonschema` dev dep only when `use_github_actions`;
+  omit project license metadata when license is Skip;
   conditional `[build-system]` (hatchling) + `[tool.hatch.build.targets.wheel]
   packages = ["src/{{ package_name }}"]` when `is_package`, otherwise keep the
   virtual-project comment; `[tool.ty.environment]` python-version;
@@ -121,8 +121,9 @@ sync and should be committed. No `_tasks` — keep generation side-effect-free.
   root README instead.
 - `AGENTS.md.jinja`: replace "this is a new repository template" framing with
   generated-project framing; command list reflects enabled features.
-- LICENSE: `{% if license != 'Proprietary' %}LICENSE{% endif %}.jinja` with
-  MIT or Apache-2.0 text, year 2026, holder `author_name or project_name`.
+- LICENSE: `{% if license == 'MIT' %}LICENSE{% endif %}.jinja` with MIT text,
+  year 2026, holder `author_name or project_name`; Proprietary and Skip do not
+  create a LICENSE file.
 - `.copier-answers.yml.jinja`: standard
   `# Changes here will be overwritten by Copier` +
   `{{ _copier_answers|to_nice_yaml -}}`.
@@ -132,14 +133,16 @@ sync and should be committed. No `_tasks` — keep generation side-effect-free.
 Replaces the current project CI. Jobs:
 
 1. **lint-template**: yamllint on copier.yml + workflows, actionlint, zizmor.
-2. **generate-and-gate** (matrix): three answer sets —
+2. **generate-and-gate** (matrix): four answer sets —
    `defaults` (quick mode), `everything-off` (custom: no docker, no GHA, no
-   extra linters, proprietary, 3.12), `everything-on` (custom: all on,
-   package mode, coverage 80). For each: `uvx copier copy --defaults
+   extra linters, Skip, 3.10), `everything-on` (custom: all on, package mode,
+   coverage 80, 3.13), and `github-actions-no-docker` (custom: GHA on, Docker
+   off, Proprietary, 3.12). For each: `uvx copier copy --defaults
    --data-file <answers.yml> . /tmp/gen`, then inside: `git init` + commit
-   (gitleaks needs history), `mise trust && mise install`, `uv sync`,
-   `mise run lint`, `mise run test`. The matrix must prove that every
-   feature combination yields valid TOML/YAML and a passing gate.
+   (gitleaks needs history), `mise trust && mise install`, `mise run install`,
+   `mise run lint`, `mise run test`, and `mise run
+   test-cov`. The matrix must prove that each covered feature combination
+   yields valid TOML/YAML and a passing gate.
 
 `scripts/test-generation.sh` wraps the per-matrix-entry steps so it can run
 locally too.
@@ -198,7 +201,7 @@ was adopted, what was intentionally kept, and any surfaced issues.
 
 ## Verification
 
-- Template repo: `scripts/test-generation.sh` passes locally for all three
+- Template repo: `scripts/test-generation.sh` passes locally for all four
   matrix answer sets; template CI green on the PR.
 - sample_db: `mise run lint` and `mise run test` pass locally on the
   branch; its CI green on the PR.
