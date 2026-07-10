@@ -28,7 +28,6 @@ exclude: ^(\.claude|\.codex|\.cursor|\.gemini)/|^(CLAUDE|AGENTS|GEMINI)\.md$
 repos:
   - repo: local
     hooks:
-      # === PHASE 0: SECRETS ===
       - id: gitleaks
         name: gitleaks (secrets)
         entry: mise exec -- gitleaks git --pre-commit --staged --redact --no-banner
@@ -36,7 +35,6 @@ repos:
         pass_filenames: false
         always_run: true
 
-      # === PHASE 1: uv LOCK CHECK ===
       - id: uv-lock-check
         name: uv (lock check)
         entry: uv lock --check
@@ -45,21 +43,18 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
 
-      # === PHASE 2: FORMATTING ===
       - id: ruff-format
         name: ruff (format)
         entry: uv run ruff format --force-exclude
         language: system
         types: [python]
 
-      # === PHASE 3: LINTING ===
       - id: ruff-check
         name: ruff (lint)
         entry: uv run ruff check --fix --force-exclude
         language: system
         types: [python]
 
-      # === PHASE 3b: ASYNC LINTING ===
       - id: flake8-async
         name: flake8-async (async patterns)
         entry: uv run flake8 --select=ASYNC
@@ -67,7 +62,6 @@ repos:
         types: [python]
         exclude: ^(tests/|scripts/|docs/)
 
-      # === PHASE 4: TYPE CHECKING ===
       - id: ty-check
         name: ty (types)
         entry: uv run ty check
@@ -78,28 +72,24 @@ repos:
 
   - repo: local
     hooks:
-      # === PHASE 5: SHELL ===
       - id: shellcheck
         name: shellcheck
         entry: mise exec -- shellcheck
         language: system
         types: [shell]
 
-      # === PHASE 6: YAML ===
       - id: yamllint
         name: yamllint
         entry: uv run yamllint -c .yamllint
         language: system
         types: [yaml]
 
-      # === PHASE 7: JSON ===
       - id: check-json
         name: jaq (json syntax)
         entry: mise exec -- jaq empty
         language: system
         types: [json]
 
-      # === PHASE 8: TOML ===
       - id: taplo-lint
         name: taplo (toml)
         entry: mise exec -- taplo lint
@@ -107,7 +97,6 @@ repos:
         types: [toml]
 
 {% if use_docker %}
-      # === PHASE 9: DOCKERFILE ===
       - id: hadolint
         name: hadolint
         entry: mise exec -- hadolint
@@ -116,21 +105,18 @@ repos:
 
 {% endif %}
 {% if use_github_actions %}
-      # === PHASE 10: GITHUB ACTIONS SCHEMA ===
       - id: check-jsonschema-github-workflows
         name: check-jsonschema (GitHub Workflows)
         entry: uv run check-jsonschema --builtin-schema github-workflows
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
 
-      # === PHASE 11: ACTIONLINT ===
       - id: actionlint
         name: actionlint
         entry: mise exec -- actionlint
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
 
-      # === PHASE 11b: ZIZMOR (GHA SECURITY) ===
       - id: zizmor
         name: zizmor (GitHub Actions security)
         entry: mise exec -- zizmor
@@ -139,7 +125,6 @@ repos:
 
 {% endif %}
 {% if "jscpd" in extra_linters %}
-      # === PHASE 12: DUPLICATES ===
       - id: jscpd
         name: jscpd (duplicates)
         entry: mise exec -- jscpd --config .jscpd.json --threshold 5
@@ -152,7 +137,6 @@ repos:
 {% endif %}
   - repo: local
     hooks:
-      # === PHASE 13: DEPENDENCY AUDIT ===
       - id: deptry
         name: deptry (dependency declarations)
         entry: uv run deptry .
@@ -170,7 +154,6 @@ repos:
         stages: [pre-commit]
 
 {% if "typos" in extra_linters %}
-      # === PHASE 14: SPELLING ===
       - id: typos
         name: typos (spelling)
         entry: mise exec -- typos
