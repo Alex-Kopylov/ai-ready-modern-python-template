@@ -34,7 +34,7 @@ Fast lint is the right place for:
 - Syntax and style checks.
 - File-local Python linting.
 - Configuration syntax checks.
-- Markdown, YAML, JSON, TOML, Dockerfile, and GitHub Actions validation.
+- Markdown, YAML, JSON, TOML, Dockerfile, and configured automation validation.
 - Spelling checks when the project accepts that spelling lint may flag prose.
 
 Use fast lint for editor integrations, agent inner loops, and quick local
@@ -54,7 +54,7 @@ Full lint is the right place for:
 - Duplicate-code checks.
 - Secret scans.
 - Dependency vulnerability audits.
-- GitHub Actions security scans.
+- Automation security scans when that automation is enabled.
 
 CI should run full lint. Commit hooks may run full-gate checks when they are
 practical at commit time, but those checks should also be represented in
@@ -73,7 +73,7 @@ Use these rules when adding a new linter:
 - Keep CI on `mise run lint` so the default lint command stays the authoritative
   final gate.
 - Do not hide missing configured targets behind "skip if missing" logic. If a
-  task names `src`, `tests`, `Dockerfile`, or a workflow file, that target is
+  task names `src`, `tests`, `Dockerfile`, or an automation file, that target is
   part of the repository contract. Restore the target or update the task
   configuration.
 

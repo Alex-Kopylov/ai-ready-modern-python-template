@@ -1,7 +1,0 @@
-# CI matrix fixture: quick mode, everything defaulted (implies Python 3.14).
-# Each answer set intentionally pins a DIFFERENT python_version so all
-# branches of the python_version_pin mapping stay gated.
-project_name: generated-defaults
-package_name: generated_defaults
-project_description: Generated project using quick defaults
-setup_mode: quick

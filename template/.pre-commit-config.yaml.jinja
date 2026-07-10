@@ -96,14 +96,12 @@ repos:
         language: system
         types: [toml]
 
-{% if use_docker %}
       - id: hadolint
         name: hadolint
         entry: mise exec -- hadolint
         language: system
         files: (^|/)Dockerfile(\..*)?$|\.dockerfile$
 
-{% endif %}
 {% if use_github_actions %}
       - id: check-jsonschema-github-workflows
         name: check-jsonschema (GitHub Workflows)
