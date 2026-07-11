@@ -47,14 +47,21 @@ jobs:
       - run: scripts/test-render-contracts.sh
 
   generate-and-gate:
-    name: Generate and gate (${{ matrix.scenario }})
+    name: Generate and gate (${{ matrix.label }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        scenario:
-          - github-actions-on
-          - github-actions-off
+        include:
+          - label: github-actions-on / default Python
+            scenario: github-actions-on
+            python_version: ""
+          - label: github-actions-off / default Python
+            scenario: github-actions-off
+            python_version: ""
+          - label: github-actions-off / Python 3.11.9 exact
+            scenario: github-actions-off
+            python_version: "3.11.9"
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
@@ -68,4 +75,7 @@ jobs:
       - uses: jdx/mise-action@v4.2.0
         with:
           github_token: ${{ github.token }}
-      - run: scripts/test-generation.sh "${{ matrix.scenario }}"
+      - run: >-
+          scripts/test-generation.sh
+          "${{ matrix.scenario }}"
+          "${{ matrix.python_version }}"

@@ -18,6 +18,9 @@ requested as a separate task.
   wizard-default project.
 - `scripts/test-generation.sh github-actions-off`: generate and gate the same
   defaults with only GitHub automation disabled.
+- `scripts/test-generation.sh github-actions-off 3.11.9`: run the full
+  exact-patch fixture; the optional version argument is reusable for Python
+  coverage scenarios.
 
 Inside a generated project, the standard commands are:
 

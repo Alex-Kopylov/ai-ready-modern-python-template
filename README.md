@@ -42,6 +42,12 @@ post-copy `git init -b` guidance plus the generated CI push filter. Copier
 updates render files but never initialize, rename, or reconfigure the existing
 Git repository.
 
+Minor Python answers from 3.10 through 3.14 map to fresh managed patches
+verified with the template-pinned uv release. Exact patch answers are expert
+mode and pass through unchanged: if uv cannot provide that managed build on the
+current platform, choose another exact patch or a supported minor. The template
+does not silently fall back to a system interpreter or source build.
+
 Generated projects intentionally choose no application framework or runtime
 entrypoint. Add the framework, dependencies, and launch command that fit the
 actual product.
@@ -104,8 +110,10 @@ a PR:
 scripts/test-render-contracts.sh
 scripts/test-generation.sh github-actions-on
 scripts/test-generation.sh github-actions-off
+scripts/test-generation.sh github-actions-off 3.11.9
 ```
 
 The render contracts cover targeted wizard overrides without installing tools.
-The two generation scenarios install and import the project, build its wheel,
-and run the full lint, test, and coverage gates.
+The generation scenarios install and import the project, build its wheel, and
+run the full lint, test, coverage, and installed-hook gates. The optional second
+argument supplies a Python minor or exact patch for reusable version coverage.

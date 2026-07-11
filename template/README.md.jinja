@@ -18,6 +18,11 @@ installs this project as well as its dependencies. `mise install` installs the
 pinned cross-language CLI tools; uv alone provisions the Python selected by
 `.python-version` when `mise run install` performs the first sync.
 
+uv uses managed Python builds only. Exact patch choices are expert mode: if the
+pinned uv release cannot provide the recorded patch on the current platform,
+choose another exact patch or a supported minor. There is no hidden system or
+source-build fallback.
+
 ## Commands
 
 - `mise run install`: install this package and its dependencies.

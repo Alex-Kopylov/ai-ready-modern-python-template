@@ -2,16 +2,22 @@
 set -euo pipefail
 
 usage() {
-  printf 'Usage: %s <github-actions-on|github-actions-off>\n' "$0" >&2
+  printf \
+    'Usage: %s <github-actions-on|github-actions-off> [python-version]\n' \
+    "$0" >&2
 }
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 || $# -gt 2 ]]; then
   usage
   exit 2
 fi
 
 scenario="$1"
+python_version_input="${2:-}"
 copier_args=()
+if [[ -n "$python_version_input" ]]; then
+  copier_args+=(--data "python_version=${python_version_input}")
+fi
 case "$scenario" in
   github-actions-on)
     ;;
@@ -36,6 +42,20 @@ trap cleanup EXIT
 fail() {
   printf 'Generation assertion failed: %s\n' "$1" >&2
   exit 1
+}
+
+assert_python_request_matches_patch() {
+  local request="$1"
+  local resolved_patch="$2"
+  local request_source="$3"
+
+  if [[ "$request" =~ ^3\.[0-9]+\.[0-9]+$ ]]; then
+    [[ "$resolved_patch" == "$request" ]] ||
+      fail \
+        "${request_source} ${request} resolved to Python ${resolved_patch}"
+  elif [[ "${resolved_patch%.*}" != "$request" ]]; then
+    fail "${request_source} ${request} resolved to Python ${resolved_patch}"
+  fi
 }
 
 assert_file_present() {
@@ -164,6 +184,18 @@ esac
 
 cd "$generated_dir"
 
+requested_python_version="$(
+  sed -n 's/^python_version: //p' .copier-answers.yml | tr -d "'\""
+)"
+[[ -n "$requested_python_version" ]] || fail "missing python_version answer"
+if [[ -n "$python_version_input" &&
+      "$requested_python_version" != "$python_version_input" ]]; then
+  fail \
+    "python_version answer ${requested_python_version} != input ${python_version_input}"
+fi
+rendered_python_version="$(tr -d '[:space:]' < .python-version)"
+[[ -n "$rendered_python_version" ]] || fail "empty .python-version"
+
 main_branch_name="$(
   sed -n 's/^main_branch_name: //p' .copier-answers.yml | tr -d "'\""
 )"
@@ -193,6 +225,14 @@ uv_python_version="$(mise exec -- uv python find --show-version)"
 if [[ ! "$uv_python_version" =~ ^3\.[0-9]+\.[0-9]+$ ]]; then
   fail "uv did not resolve a full Python patch: $uv_python_version"
 fi
+assert_python_request_matches_patch \
+  "$requested_python_version" \
+  "$uv_python_version" \
+  "python_version answer"
+assert_python_request_matches_patch \
+  "$rendered_python_version" \
+  "$uv_python_version" \
+  ".python-version"
 
 mise run install
 venv_python_version="$(

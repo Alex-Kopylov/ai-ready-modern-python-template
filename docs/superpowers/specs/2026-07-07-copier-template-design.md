@@ -94,10 +94,13 @@ side-effect-free: there are no Copier tasks that initialize or rename Git, so
 `copier update` never reconfigures an existing repository.
 
 Hidden `python_version_minor` supplies metadata, Ruff, and ty. Hidden
-`python_version_pin` preserves exact patch answers and maps known minor answers
-to reproducible uv pins. uv is the sole Python provisioner and uses
-`.python-version` with `python-preference = "only-managed"`; mise remains the
-task runner and installer for language-independent CLI tools.
+`python_version_pin` preserves exact patch answers and maps supported minor
+answers to fresh managed patches verified with the template-pinned uv release.
+Exact patches are expert mode and pass through unchanged; unavailable builds
+require choosing another patch or minor, with no hidden system or source-build
+fallback. uv is the sole Python provisioner and uses `.python-version` with
+`python-preference = "only-managed"`; mise remains the task runner and installer
+for language-independent CLI tools.
 
 ### Packaging
 
@@ -182,18 +185,19 @@ generated toolchain. It covers:
 - complete GitHub automation on/off behavior;
 - unconditional packaging, Docker, and Hadolint.
 
-`scripts/test-generation.sh` accepts exactly two scenario names:
+`scripts/test-generation.sh` accepts one of two scenario names plus an optional
+Python minor or exact patch:
 
 - `github-actions-on`: true wizard defaults;
 - `github-actions-off`: the same defaults with only GitHub automation disabled.
 
-Both scenarios render, initialize Git history on the stored main branch and
-assert its alignment, install mise CLI tools and the uv-managed Python, assert
-that mise does not provide Python, sync the project, assert the uv and
-virtual-environment patch versions match, import `my_project`, run `uv build`,
-and pass lint, test, and coverage.
-Root CI runs the render contracts and the two named scenarios, optionally as a
-scenario matrix.
+Every scenario renders, initializes Git history on the stored main branch and
+asserts its alignment, installs mise CLI tools and the uv-managed Python,
+asserts that mise does not provide Python, checks the requested/rendered/uv and
+virtual-environment versions agree, imports `my_project`, runs `uv build`, and
+passes lint, test, coverage, and installed hooks. Root CI uses an explicit
+include matrix for the two default profiles and the expert-mode Python 3.11.9
+exact fixture; later version-coverage work extends the same matrix.
 
 ### Documentation
 
@@ -226,6 +230,7 @@ replace CI with the generated mise-based workflow, and retain
 - `scripts/test-render-contracts.sh` passes.
 - `scripts/test-generation.sh github-actions-on` passes.
 - `scripts/test-generation.sh github-actions-off` passes.
+- `scripts/test-generation.sh github-actions-off 3.11.9` passes.
 - Root CI is green.
 - The separate `sample_db` branch passes its lint and test gates when that
   adoption is explicitly undertaken.
