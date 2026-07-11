@@ -102,6 +102,8 @@ obsolete_questions='setup''_mode|use''_docker|is''_package'
 assert_not_matches "${repo_root}/copier.yml" "^(${obsolete_questions}):"
 assert_not_contains "${repo_root}/copier.yml" "setup""_mode == 'custom'"
 assert_not_matches "${repo_root}/copier.yml" '^_tasks:'
+assert_contains "${repo_root}/copier.yml" '!!python/name:keyword.iskeyword'
+assert_not_contains "${repo_root}/copier.yml" "['False', 'None', 'True'"
 
 default_python_version="$(
   awk '
@@ -233,6 +235,7 @@ question_map="$({
   ' "${repo_root}/copier.yml"
 })"
 expected_question_map="$(printf '%s\n' \
+  hidden:python_is_keyword \
   visible:project_name \
   visible:project_description \
   visible:main_branch_name \
@@ -485,10 +488,8 @@ done
 
 printf 'ok -- project-name identifier boundaries remain valid\n'
 
-python_hard_keywords=(
-  class False None True and as assert async await break continue def del elif
-  else except finally for from global if import in is lambda nonlocal not or
-  pass raise return try while with yield
+readarray -t python_hard_keywords < <(
+  python3 -c 'import keyword; print("\n".join(keyword.kwlist))'
 )
 for hard_keyword in "${python_hard_keywords[@]}"; do
   expect_invalid_project_name "$hard_keyword"
@@ -496,7 +497,9 @@ done
 
 printf 'ok -- every Python hard keyword is rejected as a project name\n'
 
-python_soft_keywords=(case match type)
+readarray -t python_soft_keywords < <(
+  python3 -c 'import keyword, re; pattern = re.compile(r"^[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?$"); print("\n".join(word for word in keyword.softkwlist if pattern.fullmatch(word)))'
+)
 for soft_keyword in "${python_soft_keywords[@]}"; do
   soft_keyword_dir="${tmp_dir}/soft-keyword-${soft_keyword}"
   render_project "$soft_keyword_dir" --data "project_name=${soft_keyword}"

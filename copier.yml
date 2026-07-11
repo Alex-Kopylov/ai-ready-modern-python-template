@@ -26,6 +26,13 @@ _message_after_copy: |
   The project intentionally starts without uv.lock. The first sync or lock
   command creates it; commit uv.lock with the generated project.
 
+# Copier's FullLoader resolves this standard-library callable while loading the
+# config; keep it hidden so it only supports later question validation.
+python_is_keyword:
+  type: yaml
+  default: !!python/name:keyword.iskeyword
+  when: false
+
 project_name:
   type: str
   help: >-
@@ -33,12 +40,7 @@ project_name:
     letter; use only ASCII letters, digits, and internal underscores.
   default: my_project
   validator: >-
-    {% if project_name in
-       ['False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',
-        'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
-        'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
-        'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try',
-        'while', 'with', 'yield'] %}
+    {% if python_is_keyword(project_name) %}
     Project name must not be a Python keyword.
     {% endif %}
     {% if not (project_name |
