@@ -66,6 +66,13 @@ assert_not_matches() {
   fi
 }
 
+assert_match_count() {
+  local actual_count
+  actual_count="$(grep -Ec -- "$2" "$1" || true)"
+  [[ "$actual_count" -eq "$3" ]] ||
+    fail "expected $3 matches for pattern '$2' in $1, found $actual_count"
+}
+
 printf 'Generating scenario: %s\n' "$scenario"
 # --vcs-ref=HEAD selects the current local revision instead of Copier's
 # default latest-tag resolution; Copier also snapshots dirty local changes.
@@ -143,4 +150,46 @@ mise run lint
 mise run test
 mise run test-cov
 
-printf 'ok -- scenario %s passed generation, build, and quality gates\n' "$scenario"
+mise run install-hooks
+hook_path_dir="${tmp_dir}/hook-path"
+mkdir -p "$hook_path_dir"
+ln -s "$(command -v mise)" "${hook_path_dir}/mise"
+hook_path="${hook_path_dir}:/usr/bin:/bin"
+
+if ! env PATH="$hook_path" sh -c 'command -v mise >/dev/null'; then
+  fail "expected mise on isolated hook PATH"
+fi
+if env PATH="$hook_path" sh -c 'command -v uv >/dev/null'; then
+  fail "unexpected uv on isolated hook PATH"
+fi
+
+sed -i '$a# Installed-hook PATH regression fixture.' pyproject.toml
+sed -i 's/Hello, world!/Hello, hook smoke!/' src/my_project/main.py
+sed -i '$a# Installed-hook PATH regression fixture.' .copier-answers.yml
+hook_files=(pyproject.toml src/my_project/main.py .copier-answers.yml)
+if [[ -f .github/workflows/ci.yml ]]; then
+  sed -i '$a# Installed-hook PATH regression fixture.' .github/workflows/ci.yml
+  hook_files+=(.github/workflows/ci.yml)
+fi
+git add "${hook_files[@]}"
+for hook_file in "${hook_files[@]}"; do
+  if git diff --cached --quiet -- "$hook_file"; then
+    fail "expected staged hook input: $hook_file"
+  fi
+done
+
+env PATH="$hook_path" git commit -m "test: exercise installed hooks"
+
+expected_uv_hook_count=8
+if [[ "$scenario" == github-actions-on ]]; then
+  expected_uv_hook_count=9
+fi
+assert_not_matches \
+  .pre-commit-config.yaml \
+  '^[[:space:]]*entry: uv( |$)'
+assert_match_count \
+  .pre-commit-config.yaml \
+  '^[[:space:]]*entry: mise exec -- uv( |$)' \
+  "$expected_uv_hook_count"
+
+printf 'ok -- scenario %s passed generation, installed hooks, build, and quality gates\n' "$scenario"
