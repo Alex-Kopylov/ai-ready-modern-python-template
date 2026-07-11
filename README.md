@@ -11,8 +11,8 @@ complete bundle.
 uvx copier copy gh:Alex-Kopylov/ai-ready-modern-python-template my-project
 ```
 
-Copier resolves the latest Git tag by default. Until the first stable release
-is tagged, use a local checkout or pass an explicit VCS ref.
+Copier resolves the latest stable Git tag by default. Use a local checkout or
+pass an explicit VCS ref only when testing unreleased template changes.
 
 ## Wizard
 
