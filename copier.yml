@@ -72,9 +72,9 @@ main_branch_name:
 python_version:
   type: str
   help: >-
-    Python version for uv, requires-python, ty, and .python-version. Use a
-    minor version like 3.13 (the template selects a compatible managed patch)
-    or an exact patch version like 3.13.2.
+    Python version for uv, requires-python, ty, and .python-version. Prefer a
+    minor like 3.13 for a template-verified managed patch. Exact patches like
+    3.11.9 are expert mode and must be available from the pinned uv release.
   default: "3.14"
   # Floor computed from requires-python of the latest dev toolchain deps:
   # deptry, pytest, yamllint, and check-jsonschema all require >=3.10.
@@ -132,11 +132,15 @@ python_version_minor:
 
 python_version_pin:
   type: str
-  # Exact patch versions pass through verbatim; known minors map to pinned
-  # patches; any other minor passes through for uv to resolve.
+  # Exact patches pass through verbatim. Supported minors map to fresh managed
+  # builds verified with pinned uv 0.11.27; any other minor passes through.
   default: >-
     {% if python_version.split('.') | length == 3 -%}
     {{ python_version }}
+    {%- elif python_version == '3.10' -%}
+    3.10.20
+    {%- elif python_version == '3.11' -%}
+    3.11.15
     {%- elif python_version == '3.12' -%}
     3.12.13
     {%- elif python_version == '3.13' -%}
