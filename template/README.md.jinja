@@ -14,7 +14,9 @@ mise run test
 
 `uv.lock` is created during the first dependency sync. Commit it with the
 project so CI and local installs use the same resolved dependencies. The sync
-installs this project as well as its dependencies.
+installs this project as well as its dependencies. `mise install` installs the
+pinned cross-language CLI tools; uv alone provisions the Python selected by
+`.python-version` when `mise run install` performs the first sync.
 
 ## Commands
 
@@ -34,7 +36,8 @@ docker build -t {{ project_name }} .
 ```
 
 The image keeps a framework-neutral smoke command. Replace it only when the
-project chooses its real application runtime.
+project chooses its real application runtime. The image uses the same
+uv-managed `.python-version` interpreter as local development and CI.
 {% if use_github_actions %}
 
 ## CI

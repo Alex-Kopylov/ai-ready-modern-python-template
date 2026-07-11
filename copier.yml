@@ -39,9 +39,9 @@ project_description:
 python_version:
   type: str
   help: >-
-    Python version for requires-python, ty, mise, and .python-version. Use a
-    minor version like 3.13 (mise resolves the latest patch) or an exact
-    patch version like 3.13.2.
+    Python version for uv, requires-python, ty, and .python-version. Use a
+    minor version like 3.13 (the template selects a compatible managed patch)
+    or an exact patch version like 3.13.2.
   default: "3.14"
   # Floor computed from requires-python of the latest dev toolchain deps:
   # deptry, pytest, yamllint, and check-jsonschema all require >=3.10.
@@ -100,7 +100,7 @@ python_version_minor:
 python_version_pin:
   type: str
   # Exact patch versions pass through verbatim; known minors map to pinned
-  # patches; any other minor passes through and mise resolves the latest patch.
+  # patches; any other minor passes through for uv to resolve.
   default: >-
     {% if python_version.split('.') | length == 3 -%}
     {{ python_version }}

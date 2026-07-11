@@ -2,7 +2,7 @@
 
 Date: 2026-07-07
 
-Amended: 2026-07-10
+Amended: 2026-07-11
 
 Status: approved by user
 
@@ -72,7 +72,7 @@ The visible questions are:
 | --- | --- | --- | --- |
 | `project_name` | string | `my_project` | Project, distribution, and Python package name |
 | `project_description` | string | `Project description` | README and metadata |
-| `python_version` | string | `3.14` | Python, mise, Ruff, ty, and Docker |
+| `python_version` | string | `3.14` | Python, uv, Ruff, ty, and Docker |
 | `license` | choice | `MIT` | MIT, Proprietary, or Skip |
 | `author_name` | string | empty | License owner and optional Docker maintainer |
 | `use_github_actions` | boolean | `true` | Complete GitHub automation bundle |
@@ -85,9 +85,11 @@ project naming or validate the answer; users should choose a valid Python
 package name, and mistakes surface during the generated project's install,
 import, or lint steps.
 
-Hidden `python_version_minor` supplies metadata, Ruff, ty, and the Docker base
-tag. Hidden `python_version_pin` preserves exact patch answers and maps known
-minor answers to reproducible mise pins.
+Hidden `python_version_minor` supplies metadata, Ruff, and ty. Hidden
+`python_version_pin` preserves exact patch answers and maps known minor answers
+to reproducible uv pins. uv is the sole Python provisioner and uses
+`.python-version` with `python-preference = "only-managed"`; mise remains the
+task runner and installer for language-independent CLI tools.
 
 ### Packaging
 
@@ -119,7 +121,8 @@ build command.
 
 The Dockerfile:
 
-- uses the selected Python minor;
+- starts from uv's Python-free Debian base and installs the selected
+  `.python-version` as a uv-managed interpreter before the first sync;
 - emits a maintainer label only when `author_name` is set;
 - performs a dependency-only `uv sync` before copying source;
 - performs a second `uv sync` that installs the current package;
@@ -170,8 +173,10 @@ generated toolchain. It covers:
 - `github-actions-on`: true wizard defaults;
 - `github-actions-off`: the same defaults with only GitHub automation disabled.
 
-Both scenarios render, initialize Git history, install mise tools, sync the
-project, import `my_project`, run `uv build`, and pass lint, test, and coverage.
+Both scenarios render, initialize Git history, install mise CLI tools, install
+the uv-managed Python, assert that mise does not provide Python, sync the
+project, assert the uv and virtual-environment patch versions match, import
+`my_project`, run `uv build`, and pass lint, test, and coverage.
 Root CI runs the render contracts and the two named scenarios, optionally as a
 scenario matrix.
 

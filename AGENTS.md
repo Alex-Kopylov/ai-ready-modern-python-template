@@ -21,7 +21,7 @@ requested as a separate task.
 
 Inside a generated project, the standard commands are:
 
-- `mise install`: install mise-managed tools.
+- `mise install`: install mise-managed CLI tools; Python is provisioned by uv.
 - `mise run install`: install the current package and its dependencies.
 - `mise run lint-fast`: run edit-safe lint targets for active development.
 - `mise run lint`: run the full lint gate used by CI.
@@ -35,8 +35,9 @@ Inside a generated project, the standard commands are:
 ## Tooling
 
 - Use `jaq` instead of `jq` for JSON command-line work.
-- Python dependency and command execution in generated projects goes through
-  `uv`.
+- Python provisioning, dependency management, and command execution in
+  generated projects goes through `uv`; `.python-version` is the interpreter
+  source of truth.
 - Project task orchestration and native CLI tooling in generated projects go
   through `mise.toml`.
 - The root repository intentionally does not keep generated-project

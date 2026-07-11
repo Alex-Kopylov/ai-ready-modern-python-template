@@ -22,7 +22,7 @@ The wizard keeps project-shape choices small and explicit:
 | --- | --- | --- |
 | `project_name` | `my_project` | Project, distribution, and Python package name |
 | `project_description` | `Project description` | README and package metadata |
-| `python_version` | `3.14` | Python, mise, Ruff, ty, and Docker |
+| `python_version` | `3.14` | Python, uv, Ruff, ty, and Docker |
 | `license` | `MIT` | MIT, Proprietary, or Skip |
 | `author_name` | empty | License owner and optional Docker maintainer |
 | `use_github_actions` | `true` | Entire GitHub automation bundle |
@@ -59,7 +59,9 @@ uv build
 
 Generated projects intentionally start without `uv.lock`. The first
 `mise run install`, `uv sync`, or `uv lock` creates it; commit `uv.lock` after
-that first sync.
+that first sync. `mise install` installs the pinned cross-language CLI tools;
+uv is the sole Python provisioner and installs the `.python-version` selection
+when the project is first synced.
 
 ## Updating a Generated Project
 

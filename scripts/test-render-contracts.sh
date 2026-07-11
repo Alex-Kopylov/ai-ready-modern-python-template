@@ -43,6 +43,13 @@ assert_not_matches() {
   fi
 }
 
+assert_occurrences() {
+  local actual
+  actual="$(grep -Fc -- "$2" "$1" || true)"
+  [[ "$actual" -eq "$3" ]] || \
+    fail "expected '$2' exactly $3 times in $1; found $actual"
+}
+
 render_project() {
   local destination="$1"
   shift
@@ -111,6 +118,12 @@ assert_not_matches \
   "${default_dir}/pyproject.toml" \
   '^\[tool\.hatch\.build\.targets\.wheel\]$'
 assert_not_matches "${default_dir}/.pytest.ini" '^[[:space:]]*pythonpath[[:space:]]='
+assert_contains \
+  "${default_dir}/pyproject.toml" \
+  'python-preference = "only-managed"'
+assert_not_matches \
+  "${default_dir}/mise.toml" \
+  '^[[:space:]]*python[[:space:]]*='
 assert_file_present "${default_dir}/src/my_project/__init__.py"
 assert_file_present "${default_dir}/LICENSE"
 assert_contains "${default_dir}/LICENSE" 'Copyright (c) 2026 my_project'
@@ -125,6 +138,14 @@ printf 'ok -- default project is installable and framework-neutral\n'
 for docker_file in Dockerfile .dockerignore .hadolint.yaml; do
   assert_file_present "${default_dir}/${docker_file}"
 done
+assert_contains \
+  "${default_dir}/Dockerfile" \
+  'FROM ghcr.io/astral-sh/uv:0.11.25-trixie-slim'
+assert_not_contains "${default_dir}/Dockerfile" '0.11.25-python'
+assert_contains \
+  "${default_dir}/Dockerfile" \
+  'source=.python-version,target=.python-version'
+assert_contains "${default_dir}/Dockerfile" 'uv python install &&'
 assert_contains "${default_dir}/mise.toml" '"aqua:hadolint/hadolint"'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-dockerfile]'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: hadolint'
@@ -147,6 +168,14 @@ assert_contains "${default_dir}/mise.toml" '[tasks.lint-gha-security]'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: actionlint'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: zizmor'
 assert_contains "${default_dir}/.github/dependabot.yml" 'package-ecosystem: "docker"'
+assert_occurrences \
+  "${default_dir}/.github/workflows/ci.yml" \
+  'cache-python: true' \
+  2
+assert_occurrences \
+  "${default_dir}/.github/workflows/ci.yml" \
+  '- run: uv python install' \
+  2
 
 printf 'ok -- GitHub automation defaults on as one complete bundle\n'
 
@@ -195,19 +224,23 @@ python_310_dir="${tmp_dir}/python-3.10"
 render_project "$python_310_dir" --data python_version=3.10
 assert_contains "${python_310_dir}/pyproject.toml" 'requires-python = ">=3.10"'
 assert_contains "${python_310_dir}/pyproject.toml" 'python-version = "3.10"'
-assert_contains "${python_310_dir}/mise.toml" 'python = "3.10"'
+assert_not_matches \
+  "${python_310_dir}/mise.toml" \
+  '^[[:space:]]*python[[:space:]]*='
 assert_contains "${python_310_dir}/.python-version" '3.10'
 assert_contains "${python_310_dir}/.ruff.toml" 'target-version = "py310"'
-assert_contains "${python_310_dir}/Dockerfile" 'python3.10-trixie-slim'
+assert_not_contains "${python_310_dir}/Dockerfile" '0.11.25-python'
 
 python_patch_dir="${tmp_dir}/python-3.13.2"
 render_project "$python_patch_dir" --data python_version=3.13.2
 assert_contains "${python_patch_dir}/pyproject.toml" 'requires-python = ">=3.13"'
 assert_contains "${python_patch_dir}/pyproject.toml" 'python-version = "3.13"'
-assert_contains "${python_patch_dir}/mise.toml" 'python = "3.13.2"'
+assert_not_matches \
+  "${python_patch_dir}/mise.toml" \
+  '^[[:space:]]*python[[:space:]]*='
 assert_contains "${python_patch_dir}/.python-version" '3.13.2'
 assert_contains "${python_patch_dir}/.ruff.toml" 'target-version = "py313"'
-assert_contains "${python_patch_dir}/Dockerfile" 'python3.13-trixie-slim'
+assert_not_contains "${python_patch_dir}/Dockerfile" '0.11.25-python'
 
 printf 'ok -- minor and exact-patch Python versions reach every consumer\n'
 

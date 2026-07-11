@@ -73,6 +73,13 @@ assert_match_count() {
     fail "expected $3 matches for pattern '$2' in $1, found $actual_count"
 }
 
+assert_occurrences() {
+  local actual
+  actual="$(grep -Fc -- "$2" "$1" || true)"
+  [[ "$actual" -eq "$3" ]] || \
+    fail "expected '$2' exactly $3 times in $1; found $actual"
+}
+
 printf 'Generating scenario: %s\n' "$scenario"
 # --vcs-ref=HEAD selects the current local revision instead of Copier's
 # default latest-tag resolution; Copier also snapshots dirty local changes.
@@ -87,6 +94,14 @@ for docker_file in Dockerfile .dockerignore .hadolint.yaml; do
   assert_file_present "${generated_dir}/${docker_file}"
 done
 assert_contains "${generated_dir}/README.md" '## Docker'
+assert_contains \
+  "${generated_dir}/Dockerfile" \
+  'FROM ghcr.io/astral-sh/uv:0.11.25-trixie-slim'
+assert_not_contains "${generated_dir}/Dockerfile" '0.11.25-python'
+assert_contains \
+  "${generated_dir}/Dockerfile" \
+  'source=.python-version,target=.python-version'
+assert_contains "${generated_dir}/Dockerfile" 'uv python install &&'
 assert_contains "${generated_dir}/mise.toml" '"aqua:hadolint/hadolint"'
 assert_contains "${generated_dir}/mise.toml" '[tasks.lint-dockerfile]'
 assert_contains "${generated_dir}/.pre-commit-config.yaml" '      - id: hadolint'
@@ -96,6 +111,12 @@ assert_not_matches \
   "${generated_dir}/pyproject.toml" \
   '^\[tool\.hatch\.build\.targets\.wheel\]$'
 assert_not_matches "${generated_dir}/.pytest.ini" '^[[:space:]]*pythonpath[[:space:]]='
+assert_contains \
+  "${generated_dir}/pyproject.toml" \
+  'python-preference = "only-managed"'
+assert_not_matches \
+  "${generated_dir}/mise.toml" \
+  '^[[:space:]]*python[[:space:]]*='
 assert_contains "${generated_dir}/mise.toml" 'run = "uv sync --all-extras"'
 
 case "$scenario" in
@@ -120,6 +141,14 @@ case "$scenario" in
     assert_contains \
       "${generated_dir}/.github/dependabot.yml" \
       'package-ecosystem: "docker"'
+    assert_occurrences \
+      "${generated_dir}/.github/workflows/ci.yml" \
+      'cache-python: true' \
+      2
+    assert_occurrences \
+      "${generated_dir}/.github/workflows/ci.yml" \
+      '- run: uv python install' \
+      2
     ;;
   github-actions-off)
     assert_path_absent "${generated_dir}/.github"
@@ -143,7 +172,30 @@ git commit -m "chore: initial generated project"
 
 mise trust --yes
 mise install
+mise_tools="$(mise ls --current --json)"
+if grep -Eq '"python"' <<<"$mise_tools"; then
+  fail "mise must not provision Python: $mise_tools"
+fi
+
+mise exec -- uv python install
+uv_python_version="$(mise exec -- uv python find --show-version)"
+if [[ ! "$uv_python_version" =~ ^3\.[0-9]+\.[0-9]+$ ]]; then
+  fail "uv did not resolve a full Python patch: $uv_python_version"
+fi
+
 mise run install
+venv_python_version="$(
+  .venv/bin/python -c \
+    'import platform; print(platform.python_version())'
+)"
+if [[ "$uv_python_version" != "$venv_python_version" ]]; then
+  fail \
+    "uv Python ${uv_python_version} != .venv Python ${venv_python_version}"
+fi
+printf \
+  'ok -- uv and .venv use Python %s; mise provisions no Python\n' \
+  "$uv_python_version"
+
 mise exec -- uv run python -c "import my_project"
 mise exec -- uv build --out-dir "${tmp_dir}/dist"
 mise run lint

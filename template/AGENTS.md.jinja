@@ -8,7 +8,7 @@ shared quality gates without documenting the reason.
 
 ## Commands
 
-- `mise install`: install mise-managed tools.
+- `mise install`: install mise-managed CLI tools; Python is provisioned by uv.
 - `mise run install`: install this package and its dependencies.
 - `mise run lint-fast`: run edit-safe lint targets for active development.
 - `mise run lint`: run the full lint gate used by CI.
@@ -21,7 +21,8 @@ shared quality gates without documenting the reason.
 ## Tooling
 
 - Use `jaq` instead of `jq` for JSON command-line work.
-- Python dependency and command execution goes through `uv`.
+- Python provisioning, dependency management, and command execution go through
+  `uv`; `.python-version` is the interpreter source of truth.
 - Hatchling builds the installed package from `src/{{ project_name }}`.
 - Project task orchestration and native CLI tooling go through `mise.toml`;
   run `mise install` before invoking native linters directly.

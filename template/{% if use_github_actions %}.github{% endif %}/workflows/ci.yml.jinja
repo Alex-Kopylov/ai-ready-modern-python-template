@@ -28,6 +28,8 @@ jobs:
       - uses: astral-sh/setup-uv@v8.2.0
         with:
           enable-cache: true
+          cache-python: true
+      - run: uv python install
       - uses: jdx/mise-action@v4.2.0
         with:
           github_token: {% raw %}${{ github.token }}{% endraw +%}
@@ -46,6 +48,8 @@ jobs:
       - uses: astral-sh/setup-uv@v8.2.0
         with:
           enable-cache: true
+          cache-python: true
+      - run: uv python install
       - uses: jdx/mise-action@v4.2.0
         with:
           github_token: {% raw %}${{ github.token }}{% endraw +%}
