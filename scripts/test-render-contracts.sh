@@ -280,7 +280,7 @@ done
 
 printf 'ok -- every Python hard keyword is rejected as a project name\n'
 
-python_soft_keywords=(case match type)
+python_soft_keywords=(_ case match type)
 for soft_keyword in "${python_soft_keywords[@]}"; do
   soft_keyword_dir="${tmp_dir}/soft-keyword-${soft_keyword}"
   render_project "$soft_keyword_dir" --data "project_name=${soft_keyword}"
