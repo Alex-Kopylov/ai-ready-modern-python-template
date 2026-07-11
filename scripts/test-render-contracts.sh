@@ -118,11 +118,48 @@ default_python_version="$(
 [[ "$default_python_version" == 3.14 ]] ||
   fail "expected default Python 3.14, found ${default_python_version}"
 
+generation_matrix_row_count="$(
+  awk '
+    /^        include:$/ { in_include = 1; next }
+    in_include && /^    [^ ]/ { in_include = 0 }
+    in_include && /^          - / { row_count++ }
+    END { print row_count + 0 }
+  ' "${repo_root}/.github/workflows/ci.yml"
+)"
+[[ "$generation_matrix_row_count" == 6 ]] ||
+  fail "expected exactly six full-generation rows, found ${generation_matrix_row_count}"
+
 generation_matrix="$(
   awk '
-    /^          - label: / {
+    function emit_row() {
+      if (in_row) {
+        print label "|" scenario "|" version
+      }
+    }
+
+    /^        include:$/ { in_include = 1; next }
+    in_include && /^    [^ ]/ {
+      emit_row()
+      in_include = 0
+    }
+    !in_include { next }
+
+    /^          - / {
+      emit_row()
+      in_row = 1
+      label = "<missing label>"
+      scenario = "<missing scenario>"
+      version = "<missing python_version>"
+
+      if (/^          - label: /) {
+        label = $0
+        sub(/^          - label: /, "", label)
+      }
+      next
+    }
+    /^            label: / {
       label = $0
-      sub(/^          - label: /, "", label)
+      sub(/^            label: /, "", label)
       next
     }
     /^            scenario: / {
@@ -134,7 +171,11 @@ generation_matrix="$(
       version = $0
       sub(/^            python_version: /, "", version)
       gsub(/^"|"$/, "", version)
-      print label "|" scenario "|" version
+    }
+    END {
+      if (in_include) {
+        emit_row()
+      }
     }
   ' "${repo_root}/.github/workflows/ci.yml"
 )"
