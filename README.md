@@ -31,10 +31,11 @@ The wizard keeps project-shape choices small and explicit:
 | `coverage_fail_under` | `80` | Coverage threshold; `0` disables the gate |
 
 The same `project_name` is used for display text, distribution metadata, and
-the Python import package. The wizard rejects Python hard keywords but accepts
-soft keywords such as `match` and `type`. Choose a valid Python package name
-such as `my_project`; other naming mistakes surface when the generated project
-is installed, imported, or linted.
+the Python import package. It must start with an ASCII letter, contain only
+ASCII letters, digits, and internal underscores, and end with an ASCII letter
+or digit. The wizard also rejects Python hard keywords but accepts soft
+keywords that satisfy the unified name shape, such as `match` and `type`;
+names such as `my_project` and `Acme_Project` remain valid.
 
 `main_branch_name` is stored with the other Copier answers and controls the
 post-copy `git init -b` guidance plus the generated CI push filter. Copier

@@ -28,7 +28,9 @@ _message_after_copy: |
 
 project_name:
   type: str
-  help: Project, distribution, and Python package name.
+  help: >-
+    Project, distribution, and Python package name. Start with an ASCII
+    letter; use only ASCII letters, digits, and internal underscores.
   default: my_project
   validator: >-
     {% if project_name in
@@ -38,6 +40,11 @@ project_name:
         'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return', 'try',
         'while', 'with', 'yield'] %}
     Project name must not be a Python keyword.
+    {% endif %}
+    {% if not (project_name |
+       regex_search('^[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?$')) %}
+    Project name must start with an ASCII letter, contain only ASCII letters,
+    digits, and underscores, and end with an ASCII letter or digit.
     {% endif %}
 
 project_description:

@@ -82,10 +82,11 @@ The visible questions are:
 
 `project_name` is used unchanged for display text, distribution metadata, the
 source directory, and Python imports. The wizard does not duplicate package and
-project naming. It rejects the standard, case-sensitive Python hard-keyword set
-but accepts soft keywords. Users should choose a valid Python package name;
-other mistakes surface during the generated project's install, import, or lint
-steps.
+project naming. Its accepted domain is the intersection of ASCII Python
+identifiers and distribution names: start with a letter, use only letters,
+digits, and internal underscores, and end with a letter or digit. It also
+rejects the standard, case-sensitive Python hard-keyword set but accepts soft
+keywords that satisfy the unified distribution-name shape.
 
 `main_branch_name` is recorded in `.copier-answers.yml`, used by post-copy
 `git init -b` guidance, and rendered into the CI push filter. Generation stays
@@ -175,6 +176,7 @@ generated toolchain. It covers:
 - disabled coverage gate;
 - empty optional-linter selection;
 - unchanged project-name propagation;
+- invalid project-name shapes and valid identifier boundaries;
 - hard-keyword rejection and soft-keyword acceptance;
 - default and custom main-branch propagation;
 - complete GitHub automation on/off behavior;

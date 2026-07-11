@@ -334,6 +334,37 @@ assert_contains "${named_dir}/README.md" 'docker build -t Acme_Project .'
 
 printf 'ok -- one project name is used unchanged everywhere\n'
 
+invalid_project_name_shapes=(
+  acme.api
+  acme-api
+  2026app
+  'acme api'
+  _
+  _acme
+  acme_
+  .acme
+  acme.
+  -acme
+  acme-
+)
+for invalid_project_name in "${invalid_project_name_shapes[@]}"; do
+  expect_invalid_project_name "$invalid_project_name"
+done
+
+printf 'ok -- non-identifier project-name shapes are rejected\n'
+
+valid_project_name_boundaries=(A a1 a_b a__b)
+for valid_project_name in "${valid_project_name_boundaries[@]}"; do
+  valid_name_dir="${tmp_dir}/valid-project-name-${valid_project_name}"
+  render_project "$valid_name_dir" --data "project_name=${valid_project_name}"
+  assert_file_present "${valid_name_dir}/src/${valid_project_name}/__init__.py"
+  assert_contains \
+    "${valid_name_dir}/pyproject.toml" \
+    "name = \"${valid_project_name}\""
+done
+
+printf 'ok -- project-name identifier boundaries remain valid\n'
+
 python_hard_keywords=(
   class False None True and as assert async await break continue def del elif
   else except finally for from global if import in is lambda nonlocal not or
@@ -345,14 +376,14 @@ done
 
 printf 'ok -- every Python hard keyword is rejected as a project name\n'
 
-python_soft_keywords=(_ case match type)
+python_soft_keywords=(case match type)
 for soft_keyword in "${python_soft_keywords[@]}"; do
   soft_keyword_dir="${tmp_dir}/soft-keyword-${soft_keyword}"
   render_project "$soft_keyword_dir" --data "project_name=${soft_keyword}"
   assert_file_present "${soft_keyword_dir}/src/${soft_keyword}/__init__.py"
 done
 
-printf 'ok -- Python soft keywords remain valid project names\n'
+printf 'ok -- supported Python soft keywords remain valid project names\n'
 
 if rg -n --hidden --glob '!.git' "$obsolete_questions" "$repo_root"; then
   fail "obsolete wizard concepts remain in the repository"
