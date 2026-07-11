@@ -69,6 +69,11 @@ Inside a generated project, the standard commands are:
 
 ## Releasing
 
-After the Copier migration is merged and CI is green, tag `v1.0.0` on the merge
-commit so `uvx copier copy gh:Alex-Kopylov/ai-ready-modern-python-template
-my-project` resolves to the stable template version by default.
+Use the `dev-workflow:version-bumper` skill for every version change. Follow
+its discovery and verification workflow instead of editing version strings by
+hand.
+
+After the release change is merged and CI is green, push the corresponding
+`vX.Y.Z` tag, publish a GitHub Release, and smoke-test
+`uvx copier copy gh:Alex-Kopylov/ai-ready-modern-python-template my-project` so
+the default Copier command resolves to the new stable version.
