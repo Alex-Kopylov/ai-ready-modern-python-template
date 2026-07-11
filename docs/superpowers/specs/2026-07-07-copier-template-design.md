@@ -72,6 +72,7 @@ The visible questions are:
 | --- | --- | --- | --- |
 | `project_name` | string | `my_project` | Project, distribution, and Python package name |
 | `project_description` | string | `Project description` | README and metadata |
+| `main_branch_name` | string | `main` | Git setup guidance and CI push branch |
 | `python_version` | string | `3.14` | Python, uv, Ruff, ty, and Docker |
 | `license` | choice | `MIT` | MIT, Proprietary, or Skip |
 | `author_name` | string | empty | License owner and optional Docker maintainer |
@@ -85,6 +86,11 @@ project naming. It rejects the standard, case-sensitive Python hard-keyword set
 but accepts soft keywords. Users should choose a valid Python package name;
 other mistakes surface during the generated project's install, import, or lint
 steps.
+
+`main_branch_name` is recorded in `.copier-answers.yml`, used by post-copy
+`git init -b` guidance, and rendered into the CI push filter. Generation stays
+side-effect-free: there are no Copier tasks that initialize or rename Git, so
+`copier update` never reconfigures an existing repository.
 
 Hidden `python_version_minor` supplies metadata, Ruff, and ty. Hidden
 `python_version_pin` preserves exact patch answers and maps known minor answers
@@ -147,6 +153,9 @@ ecosystem block because the Dockerfile always exists.
 When disabled, none of those artifacts or operational references remain. The
 Docker and Hadolint baseline is unchanged.
 
+The generated CI push trigger watches `main_branch_name`; pull-request checks
+continue to accept every target branch.
+
 ### Optional lint and coverage choices
 
 The `extra_linters` multiselect directly controls jscpd, typos, and markdownlint
@@ -167,6 +176,7 @@ generated toolchain. It covers:
 - empty optional-linter selection;
 - unchanged project-name propagation;
 - hard-keyword rejection and soft-keyword acceptance;
+- default and custom main-branch propagation;
 - complete GitHub automation on/off behavior;
 - unconditional packaging, Docker, and Hadolint.
 
@@ -175,10 +185,11 @@ generated toolchain. It covers:
 - `github-actions-on`: true wizard defaults;
 - `github-actions-off`: the same defaults with only GitHub automation disabled.
 
-Both scenarios render, initialize Git history, install mise CLI tools, install
-the uv-managed Python, assert that mise does not provide Python, sync the
-project, assert the uv and virtual-environment patch versions match, import
-`my_project`, run `uv build`, and pass lint, test, and coverage.
+Both scenarios render, initialize Git history on the stored main branch and
+assert its alignment, install mise CLI tools and the uv-managed Python, assert
+that mise does not provide Python, sync the project, assert the uv and
+virtual-environment patch versions match, import `my_project`, run `uv build`,
+and pass lint, test, and coverage.
 Root CI runs the render contracts and the two named scenarios, optionally as a
 scenario matrix.
 
