@@ -15,7 +15,7 @@ _message_after_copy: |
   Next steps:
 
     cd {{ _copier_conf.dst_path }}
-    git init
+    git init -b {{ main_branch_name }}
     git add .
     git commit -m "chore: initial project from template"
     mise install
@@ -44,6 +44,21 @@ project_description:
   type: str
   help: Short project description for README and package metadata.
   default: Project description
+
+main_branch_name:
+  type: str
+  help: Default Git branch name used by setup guidance and generated CI.
+  default: main
+  validator: >-
+    {% if not (main_branch_name | regex_search('^[A-Za-z0-9][A-Za-z0-9._/-]*$'))
+       or '..' in main_branch_name
+       or '//' in main_branch_name
+       or '@{' in main_branch_name
+       or main_branch_name == '@'
+       or (main_branch_name | regex_search('(^|/)\\.|[/.]$|\\.lock($|/)')) %}
+    Use a valid Git branch name without spaces, consecutive dots or slashes,
+    reflog syntax, dot-prefixed path components, or a .lock suffix.
+    {% endif %}
 
 python_version:
   type: str

@@ -164,7 +164,18 @@ esac
 
 cd "$generated_dir"
 
-git init
+main_branch_name="$(
+  sed -n 's/^main_branch_name: //p' .copier-answers.yml | tr -d "'\""
+)"
+[[ -n "$main_branch_name" ]] || fail "missing main_branch_name answer"
+
+git_home="${tmp_dir}/git-home"
+mkdir -p "$git_home"
+GIT_CONFIG_NOSYSTEM=1 HOME="$git_home" git init -b "$main_branch_name"
+actual_branch_name="$(git symbolic-ref --short HEAD)"
+[[ "$actual_branch_name" == "$main_branch_name" ]] || {
+  fail "generated repo branch '$actual_branch_name' != '$main_branch_name'"
+}
 git config user.name "Template Generation Test"
 git config user.email "template-generation@example.invalid"
 git add .

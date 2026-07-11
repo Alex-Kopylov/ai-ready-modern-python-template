@@ -22,6 +22,7 @@ The wizard keeps project-shape choices small and explicit:
 | --- | --- | --- |
 | `project_name` | `my_project` | Project, distribution, and Python package name |
 | `project_description` | `Project description` | README and package metadata |
+| `main_branch_name` | `main` | Git setup guidance and generated CI push branch |
 | `python_version` | `3.14` | Python, uv, Ruff, ty, and Docker |
 | `license` | `MIT` | MIT, Proprietary, or Skip |
 | `author_name` | empty | License owner and optional Docker maintainer |
@@ -35,6 +36,11 @@ soft keywords such as `match` and `type`. Choose a valid Python package name
 such as `my_project`; other naming mistakes surface when the generated project
 is installed, imported, or linted.
 
+`main_branch_name` is stored with the other Copier answers and controls the
+post-copy `git init -b` guidance plus the generated CI push filter. Copier
+updates render files but never initialize, rename, or reconfigure the existing
+Git repository.
+
 Generated projects intentionally choose no application framework or runtime
 entrypoint. Add the framework, dependencies, and launch command that fit the
 actual product.
@@ -47,7 +53,7 @@ every possible rule.
 
 ```bash
 cd my-project
-git init
+git init -b main
 git add .
 git commit -m "chore: initial project from template"
 mise install

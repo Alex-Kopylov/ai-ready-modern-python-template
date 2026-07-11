@@ -83,9 +83,25 @@ expect_invalid_project_name() {
   assert_contains "$render_log" "Validation error for question 'project_name'"
 }
 
+assert_render_rejected() {
+  local destination="$1"
+  shift
+
+  if uvx copier copy \
+    --quiet \
+    --defaults \
+    --vcs-ref=HEAD \
+    "$@" \
+    "$repo_root" \
+    "$destination" >"$render_log" 2>&1; then
+    fail "Copier unexpectedly rendered $destination"
+  fi
+}
+
 obsolete_questions='setup''_mode|use''_docker|is''_package'
 assert_not_matches "${repo_root}/copier.yml" "^(${obsolete_questions}):"
 assert_not_contains "${repo_root}/copier.yml" "setup""_mode == 'custom'"
+assert_not_matches "${repo_root}/copier.yml" '^_tasks:'
 
 question_map="$({
   awk '
@@ -110,6 +126,7 @@ question_map="$({
 expected_question_map="$(printf '%s\n' \
   visible:project_name \
   visible:project_description \
+  visible:main_branch_name \
   visible:python_version \
   visible:license \
   visible:author_name \
@@ -193,8 +210,20 @@ assert_occurrences \
   "${default_dir}/.github/workflows/ci.yml" \
   '- run: uv python install' \
   2
+assert_contains "${default_dir}/.github/workflows/ci.yml" '      - "main"'
 
 printf 'ok -- GitHub automation defaults on as one complete bundle\n'
+
+custom_branch_dir="${tmp_dir}/custom-main-branch"
+render_project "$custom_branch_dir" --data main_branch_name=trunk
+assert_contains "${custom_branch_dir}/.copier-answers.yml" 'main_branch_name: trunk'
+assert_contains "${custom_branch_dir}/.github/workflows/ci.yml" '      - "trunk"'
+assert_not_contains "${custom_branch_dir}/.github/workflows/ci.yml" '      - "main"'
+assert_render_rejected \
+  "${tmp_dir}/invalid-main-branch" \
+  --data 'main_branch_name=feature branch'
+
+printf 'ok -- selected main branch reaches generated CI\n'
 
 github_off_dir="${tmp_dir}/github-actions-off"
 render_project "$github_off_dir" --data use_github_actions=false

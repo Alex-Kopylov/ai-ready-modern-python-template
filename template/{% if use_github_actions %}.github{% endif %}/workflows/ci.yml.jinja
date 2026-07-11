@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - "{{ main_branch_name }}"
   pull_request:
     branches:
       - "**"
