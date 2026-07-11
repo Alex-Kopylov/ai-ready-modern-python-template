@@ -30,9 +30,10 @@ The wizard keeps project-shape choices small and explicit:
 | `coverage_fail_under` | `80` | Coverage threshold; `0` disables the gate |
 
 The same `project_name` is used for display text, distribution metadata, and
-the Python import package. Choose a valid Python package name such as
-`my_project`; naming mistakes surface when the generated project is installed,
-imported, or linted.
+the Python import package. The wizard rejects Python hard keywords but accepts
+soft keywords such as `match` and `type`. Choose a valid Python package name
+such as `my_project`; other naming mistakes surface when the generated project
+is installed, imported, or linted.
 
 Generated projects intentionally choose no application framework or runtime
 entrypoint. Add the framework, dependencies, and launch command that fit the

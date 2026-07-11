@@ -59,6 +59,23 @@ render_project() {
   fi
 }
 
+expect_invalid_project_name() {
+  local project_name="$1"
+  local invalid_dir="${tmp_dir}/invalid-project-name"
+
+  rm -rf "$invalid_dir"
+  if uvx copier copy \
+    --quiet \
+    --defaults \
+    --vcs-ref=HEAD \
+    --data "project_name=${project_name}" \
+    "$repo_root" \
+    "$invalid_dir" 2>"$render_log"; then
+    fail "project_name=${project_name} must be rejected"
+  fi
+  assert_contains "$render_log" "Validation error for question 'project_name'"
+}
+
 obsolete_questions='setup''_mode|use''_docker|is''_package'
 assert_not_matches "${repo_root}/copier.yml" "^(${obsolete_questions}):"
 assert_not_contains "${repo_root}/copier.yml" "setup""_mode == 'custom'"
@@ -251,6 +268,26 @@ assert_contains "${named_dir}/README.md" '# Acme_Project'
 assert_contains "${named_dir}/README.md" 'docker build -t Acme_Project .'
 
 printf 'ok -- one project name is used unchanged everywhere\n'
+
+python_hard_keywords=(
+  class False None True and as assert async await break continue def del elif
+  else except finally for from global if import in is lambda nonlocal not or
+  pass raise return try while with yield
+)
+for hard_keyword in "${python_hard_keywords[@]}"; do
+  expect_invalid_project_name "$hard_keyword"
+done
+
+printf 'ok -- every Python hard keyword is rejected as a project name\n'
+
+python_soft_keywords=(case match type)
+for soft_keyword in "${python_soft_keywords[@]}"; do
+  soft_keyword_dir="${tmp_dir}/soft-keyword-${soft_keyword}"
+  render_project "$soft_keyword_dir" --data "project_name=${soft_keyword}"
+  assert_file_present "${soft_keyword_dir}/src/${soft_keyword}/__init__.py"
+done
+
+printf 'ok -- Python soft keywords remain valid project names\n'
 
 if rg -n --hidden --glob '!.git' "$obsolete_questions" "$repo_root"; then
   fail "obsolete wizard concepts remain in the repository"
