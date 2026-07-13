@@ -1,4 +1,4 @@
-# Taplo TOML Linter Configuration
+# Taplo TOML Configuration
 # https://taplo.tamasfe.dev/configuration/
 
 # Include all TOML files in project
@@ -9,20 +9,18 @@ exclude = ["**/node_modules/**", "**/target/**", "**/.venv/**"]
 
 [formatting]
 # NOTE: Formatting options are intentionally relaxed.
-# The hook prioritizes catching syntax errors over enforcing strict formatting.
-# Alignment checks (align_entries) are disabled to avoid false positives.
+# Preserve manual key ordering and avoid alignment-only diffs.
 
-# Align entries in tables for readability
+# Keep table entries unaligned
 align_entries = false
-# Use 4-space indentation for arrays
+# Keep entries flush with their table
 indent_entries = false
+# Keep subtable headers unindented
 indent_tables = false
-# Compact inline tables
-compact_inline_tables = true
-# Reorder keys alphabetically within sections (except pyproject.toml)
-reorder_keys = true
-
-# pyproject.toml gets special treatment
-[[rule]]
-formatting = { reorder_keys = false } # Preserve manual key ordering
-include = ["pyproject.toml"]
+# Preserve intentional single-line and multiline arrays
+array_auto_collapse = false
+array_auto_expand = false
+# Keep spaces inside inline tables
+compact_inline_tables = false
+# Preserve manual key ordering
+reorder_keys = false

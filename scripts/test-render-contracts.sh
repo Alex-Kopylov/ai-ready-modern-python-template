@@ -278,6 +278,8 @@ assert_not_contains "${default_dir}/pyproject.toml" "fastapi"
 assert_not_contains "${default_dir}/pyproject.toml" "uvicorn"
 assert_not_contains "${default_dir}/Dockerfile" "fastapi"
 assert_not_contains "${default_dir}/Dockerfile" "uvicorn"
+assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: taplo-fmt'
+assert_contains "${default_dir}/mise.toml" 'taplo fmt'
 
 printf 'ok -- default project is installable and framework-neutral\n'
 

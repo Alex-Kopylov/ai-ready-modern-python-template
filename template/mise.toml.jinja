@@ -73,18 +73,18 @@ run = [
   { tasks = [
     "lint-python-fast",
     "lint-dockerfile",
-    {% if "markdownlint" in extra_linters -%}
+    {% if "markdownlint" in extra_linters %}
     "lint-md",
-    {% endif -%}
+    {% endif %}
     "lint-yml",
     "lint-json",
     "lint-toml",
-    {% if use_github_actions -%}
+    {% if use_github_actions %}
     "lint-github-actions",
-    {% endif -%}
-    {% if "typos" in extra_linters -%}
+    {% endif %}
+    {% if "typos" in extra_linters %}
     "lint-typos",
-    {% endif -%}
+    {% endif %}
   ] },
 ]
 
@@ -95,14 +95,14 @@ run = [
     "lint-fast",
     "lint-python-deep",
     "lint-deps",
-    {% if "jscpd" in extra_linters -%}
+    {% if "jscpd" in extra_linters %}
     "lint-duplicates",
-    {% endif -%}
+    {% endif %}
     "lint-secrets",
     "lint-audit",
-    {% if use_github_actions -%}
+    {% if use_github_actions %}
     "lint-gha-security",
-    {% endif -%}
+    {% endif %}
   ] },
 ]
 
@@ -204,10 +204,11 @@ description = "Run the pytest suite with a coverage report"
 run = "uv run pytest tests/ --cov --cov-report=term-missing"
 
 [tasks.format]
-description = "Format and autofix Python code"
+description = "Format and autofix Python and TOML files"
 run = [
   "uv run ruff format src tests",
   "uv run ruff check --fix src tests",
+  "mise exec -- taplo fmt",
 ]
 
 [tasks.install-hooks]

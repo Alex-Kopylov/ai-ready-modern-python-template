@@ -91,6 +91,12 @@ repos:
         language: system
         types: [json]
 
+      - id: taplo-fmt
+        name: taplo (toml format)
+        entry: mise exec -- taplo fmt
+        language: system
+        types: [toml]
+
       - id: taplo-lint
         name: taplo (toml)
         entry: mise exec -- taplo lint

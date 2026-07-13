@@ -28,10 +28,10 @@ dev = [
   "prek",
   # YAML linting
   "yamllint",
-  {% if use_github_actions -%}
+  {% if use_github_actions %}
   # JSON schema validation
   "check-jsonschema",
-  {% endif -%}
+  {% endif %}
 ]
 
 [build-system]
