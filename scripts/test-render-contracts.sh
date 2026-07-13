@@ -120,66 +120,14 @@ default_python_version="$(
 [[ "$default_python_version" == 3.14 ]] ||
   fail "expected default Python 3.14, found ${default_python_version}"
 
-generation_matrix_row_count="$(
-  awk '
-    /^        include:$/ { in_include = 1; next }
-    in_include && /^    [^ ]/ { in_include = 0 }
-    in_include && /^          - / { row_count++ }
-    END { print row_count + 0 }
-  ' "${repo_root}/.github/workflows/ci.yml"
-)"
-[[ "$generation_matrix_row_count" == 6 ]] ||
-  fail "expected exactly six full-generation rows, found ${generation_matrix_row_count}"
-
 generation_matrix="$(
-  awk '
-    function emit_row() {
-      if (in_row) {
-        print label "|" scenario "|" version
-      }
+  sed -n '
+    /^        include:$/,/^    [^ ]/ {
+      s/^          - label: //p
+      s/^            scenario: //p
+      s/^            python_version: "\(.*\)"$/\1/p
     }
-
-    /^        include:$/ { in_include = 1; next }
-    in_include && /^    [^ ]/ {
-      emit_row()
-      in_include = 0
-    }
-    !in_include { next }
-
-    /^          - / {
-      emit_row()
-      in_row = 1
-      label = "<missing label>"
-      scenario = "<missing scenario>"
-      version = "<missing python_version>"
-
-      if (/^          - label: /) {
-        label = $0
-        sub(/^          - label: /, "", label)
-      }
-      next
-    }
-    /^            label: / {
-      label = $0
-      sub(/^            label: /, "", label)
-      next
-    }
-    /^            scenario: / {
-      scenario = $0
-      sub(/^            scenario: /, "", scenario)
-      next
-    }
-    /^            python_version: / {
-      version = $0
-      sub(/^            python_version: /, "", version)
-      gsub(/^"|"$/, "", version)
-    }
-    END {
-      if (in_include) {
-        emit_row()
-      }
-    }
-  ' "${repo_root}/.github/workflows/ci.yml"
+  ' "${repo_root}/.github/workflows/ci.yml" | paste -d '|' - - -
 )"
 expected_generation_matrix="$(printf '%s\n' \
   'github-actions-on / default Python|github-actions-on|' \
@@ -195,24 +143,7 @@ expected_generation_matrix="$(printf '%s\n' \
   fail "full-generation Python matrix changed"
 }
 
-matrix_python_minors="$(
-  awk -F '|' -v default_version="$default_python_version" '
-    {
-      version = $3 == "" ? default_version : $3
-      split(version, components, ".")
-      print components[1] "." components[2]
-    }
-  ' <<<"$generation_matrix" | sort -u
-)"
-expected_python_minors="$(printf '%s\n' 3.10 3.11 3.12 3.13 3.14)"
-[[ "$matrix_python_minors" == "$expected_python_minors" ]] || {
-  printf 'Expected Python minors:\n%s\nActual Python minors:\n%s\n' \
-    "$expected_python_minors" \
-    "$matrix_python_minors" >&2
-  fail "full-generation Python minor coverage changed"
-}
-
-printf 'ok -- full-generation matrix covers Python 3.10 through 3.14\n'
+printf 'ok -- full-generation matrix matches the pinned six-row contract\n'
 
 question_map="$({
   awk '
