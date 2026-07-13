@@ -263,6 +263,7 @@ assert_contains \
 assert_not_matches \
   "${default_dir}/mise.toml" \
   '^[[:space:]]*python[[:space:]]*='
+assert_contains "${default_dir}/mise.toml" 'run = "uv sync --all-extras"'
 assert_file_present "${default_dir}/src/my_project/__init__.py"
 assert_file_present "${default_dir}/LICENSE"
 assert_contains "${default_dir}/LICENSE" 'Copyright (c) 2026 my_project'
@@ -306,6 +307,9 @@ assert_contains "${default_dir}/mise.toml" '"aqua:rhysd/actionlint"'
 assert_contains "${default_dir}/mise.toml" '"aqua:zizmorcore/zizmor"'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-github-actions]'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-gha-security]'
+assert_contains \
+  "${default_dir}/.pre-commit-config.yaml" \
+  '      - id: check-jsonschema-github-workflows'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: actionlint'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: zizmor'
 assert_contains "${default_dir}/.github/dependabot.yml" 'package-ecosystem: "docker"'
