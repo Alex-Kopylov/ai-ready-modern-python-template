@@ -146,6 +146,21 @@ printf \
   'ok -- uv and .venv use Python %s; mise provisions no Python\n' \
   "$uv_python_version"
 
+mise exec -- taplo fmt --check
+sed 's/^dependencies = \[\]$/dependencies=[]/' \
+  pyproject.toml > pyproject.toml.tmp
+mv pyproject.toml.tmp pyproject.toml
+grep -Fxq 'dependencies=[]' pyproject.toml || {
+  fail "expected an unformatted TOML fixture in pyproject.toml"
+}
+mise run format
+grep -Fxq 'dependencies = []' pyproject.toml || {
+  fail "mise run format did not format pyproject.toml"
+}
+git diff --quiet -- pyproject.toml || {
+  fail "mise run format did not restore the committed pyproject.toml"
+}
+
 mise exec -- uv run python -c "import my_project"
 mise exec -- uv build --out-dir "${tmp_dir}/dist"
 mise run lint

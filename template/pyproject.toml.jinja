@@ -22,9 +22,9 @@ dev = [
   "deptry>=0.25.1",
   # Testing
   "pytest",
-  {% if parallel_testing -%}
+  {% if parallel_testing %}
   "pytest-xdist",
-  {% endif -%}
+  {% endif %}
   "pytest-cov>=7.1.0",
   # Git hooks
   "prek",
