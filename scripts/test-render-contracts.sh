@@ -317,13 +317,22 @@ assert_contains "${default_dir}/mise.toml" '[tasks.lint-gha-security]'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: actionlint'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: zizmor'
 assert_contains "${default_dir}/.github/dependabot.yml" 'package-ecosystem: "docker"'
+assert_not_contains \
+  "${default_dir}/.github/workflows/ci.yml" \
+  'astral-sh/setup-uv'
+assert_not_contains \
+  "${default_dir}/.github/workflows/ci.yml" \
+  'uv python install'
+assert_not_contains \
+  "${default_dir}/.github/workflows/ci.yml" \
+  'uv lock --check'
 assert_occurrences \
   "${default_dir}/.github/workflows/ci.yml" \
-  'cache-python: true' \
+  'uv sync --all-extras --locked' \
   2
 assert_occurrences \
   "${default_dir}/.github/workflows/ci.yml" \
-  '- run: uv python install' \
+  'jdx/mise-action' \
   2
 assert_contains "${default_dir}/.github/workflows/ci.yml" '      - "main"'
 

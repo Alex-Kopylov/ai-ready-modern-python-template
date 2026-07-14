@@ -161,13 +161,22 @@ case "$scenario" in
     assert_contains \
       "${generated_dir}/.github/dependabot.yml" \
       'package-ecosystem: "docker"'
+    assert_not_contains \
+      "${generated_dir}/.github/workflows/ci.yml" \
+      'astral-sh/setup-uv'
+    assert_not_contains \
+      "${generated_dir}/.github/workflows/ci.yml" \
+      'uv python install'
+    assert_not_contains \
+      "${generated_dir}/.github/workflows/ci.yml" \
+      'uv lock --check'
     assert_occurrences \
       "${generated_dir}/.github/workflows/ci.yml" \
-      'cache-python: true' \
+      'uv sync --all-extras --locked' \
       2
     assert_occurrences \
       "${generated_dir}/.github/workflows/ci.yml" \
-      '- run: uv python install' \
+      'jdx/mise-action' \
       2
     ;;
   github-actions-off)
