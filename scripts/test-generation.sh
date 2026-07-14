@@ -157,8 +157,8 @@ mise run format
 grep -Fxq 'dependencies = []' pyproject.toml || {
   fail "mise run format did not format pyproject.toml"
 }
-git diff --quiet -- pyproject.toml || {
-  fail "mise run format did not restore the committed pyproject.toml"
+git diff --quiet || {
+  fail "mise run format changed the committed generated project"
 }
 
 mise exec -- uv run python -c "import my_project"
