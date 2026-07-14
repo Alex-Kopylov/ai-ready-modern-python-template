@@ -263,6 +263,9 @@ assert_contains \
 assert_not_matches \
   "${default_dir}/mise.toml" \
   '^[[:space:]]*python[[:space:]]*='
+assert_file_present "${default_dir}/scripts/example.sh"
+[[ -x "${default_dir}/scripts/example.sh" ]] ||
+  fail "expected executable file: ${default_dir}/scripts/example.sh"
 assert_contains "${default_dir}/mise.toml" 'run = "uv sync --all-extras"'
 assert_file_present "${default_dir}/src/my_project/__init__.py"
 assert_file_present "${default_dir}/LICENSE"
@@ -290,6 +293,8 @@ assert_contains \
 assert_contains "${default_dir}/Dockerfile" 'uv python install &&'
 assert_contains "${default_dir}/mise.toml" '"aqua:hadolint/hadolint"'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-dockerfile]'
+assert_contains "${default_dir}/mise.toml" '[tasks.lint-shell]'
+assert_contains "${default_dir}/mise.toml" '    "lint-shell",'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: hadolint'
 assert_contains "${default_dir}/README.md" '## Docker'
 

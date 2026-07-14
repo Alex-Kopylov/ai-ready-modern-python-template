@@ -168,7 +168,8 @@ fi
 sed -i '$a# Installed-hook PATH regression fixture.' pyproject.toml
 sed -i 's/Hello, world!/Hello, hook smoke!/' src/my_project/main.py
 sed -i '$a# Installed-hook PATH regression fixture.' .copier-answers.yml
-hook_files=(pyproject.toml src/my_project/main.py .copier-answers.yml)
+sed -i '$a# Installed-hook ShellCheck regression fixture.' scripts/example.sh
+hook_files=(pyproject.toml src/my_project/main.py .copier-answers.yml scripts/example.sh)
 if [[ -f .github/workflows/ci.yml ]]; then
   sed -i '$a# Installed-hook PATH regression fixture.' .github/workflows/ci.yml
   hook_files+=(.github/workflows/ci.yml)

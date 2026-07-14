@@ -51,6 +51,7 @@ run = [
   { tasks = [
     "lint-python-fast",
     "lint-dockerfile",
+    "lint-shell",
     {% if "markdownlint" in extra_linters -%}
     "lint-md",
     {% endif -%}
@@ -102,6 +103,10 @@ run = [
 [tasks.lint-dockerfile]
 description = "Lint Dockerfiles with Hadolint"
 run = "mise exec -- hadolint Dockerfile"
+
+[tasks.lint-shell]
+description = "Lint shell scripts with ShellCheck"
+run = "mise exec -- shellcheck scripts/*.sh"
 
 {% if "markdownlint" in extra_linters -%}
 [tasks.lint-md]
