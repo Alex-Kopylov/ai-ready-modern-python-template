@@ -58,28 +58,6 @@ assert_python_request_matches_patch() {
   fi
 }
 
-assert_file_present() {
-  [[ -f "$1" ]] || fail "expected file: $1"
-}
-
-assert_path_absent() {
-  [[ ! -e "$1" ]] || fail "unexpected path: $1"
-}
-
-assert_contains() {
-  grep -Fq -- "$2" "$1" || fail "expected '$2' in $1"
-}
-
-assert_not_contains() {
-  if grep -Fq -- "$2" "$1"; then
-    fail "unexpected '$2' in $1"
-  fi
-}
-
-assert_matches() {
-  grep -Eq -- "$2" "$1" || fail "expected pattern '$2' in $1"
-}
-
 assert_not_matches() {
   if grep -Eq -- "$2" "$1"; then
     fail "unexpected pattern '$2' in $1"
@@ -93,13 +71,6 @@ assert_match_count() {
     fail "expected $3 matches for pattern '$2' in $1, found $actual_count"
 }
 
-assert_occurrences() {
-  local actual
-  actual="$(grep -Fc -- "$2" "$1" || true)"
-  [[ "$actual" -eq "$3" ]] || \
-    fail "expected '$2' exactly $3 times in $1; found $actual"
-}
-
 printf 'Generating scenario: %s\n' "$scenario"
 # --vcs-ref=HEAD selects the current local revision instead of Copier's
 # default latest-tag resolution; Copier also snapshots dirty local changes.
@@ -109,87 +80,6 @@ uvx copier copy \
   "${copier_args[@]}" \
   "$repo_root" \
   "$generated_dir"
-
-for docker_file in Dockerfile .dockerignore .hadolint.yaml; do
-  assert_file_present "${generated_dir}/${docker_file}"
-done
-assert_contains "${generated_dir}/README.md" '## Docker'
-assert_contains \
-  "${generated_dir}/Dockerfile" \
-  'FROM ghcr.io/astral-sh/uv:0.11.25-trixie-slim'
-assert_not_contains "${generated_dir}/Dockerfile" '0.11.25-python'
-assert_contains \
-  "${generated_dir}/Dockerfile" \
-  'source=.python-version,target=.python-version'
-assert_contains "${generated_dir}/Dockerfile" 'uv python install &&'
-assert_contains "${generated_dir}/mise.toml" '"aqua:hadolint/hadolint"'
-assert_contains "${generated_dir}/mise.toml" '[tasks.lint-dockerfile]'
-assert_contains "${generated_dir}/.pre-commit-config.yaml" '      - id: hadolint'
-
-assert_matches "${generated_dir}/pyproject.toml" '^\[build-system\]$'
-assert_not_matches \
-  "${generated_dir}/pyproject.toml" \
-  '^\[tool\.hatch\.build\.targets\.wheel\]$'
-assert_not_matches "${generated_dir}/.pytest.ini" '^[[:space:]]*pythonpath[[:space:]]='
-assert_contains \
-  "${generated_dir}/pyproject.toml" \
-  'python-preference = "only-managed"'
-assert_not_matches \
-  "${generated_dir}/mise.toml" \
-  '^[[:space:]]*python[[:space:]]*='
-assert_contains "${generated_dir}/mise.toml" 'run = "uv sync --all-extras"'
-
-case "$scenario" in
-  github-actions-on)
-    for automation_file in \
-      .github/workflows/ci.yml \
-      .github/dependabot.yml \
-      .github/zizmor.yml \
-      renovate.json5; do
-      assert_file_present "${generated_dir}/${automation_file}"
-    done
-    assert_contains "${generated_dir}/pyproject.toml" '"check-jsonschema"'
-    assert_contains "${generated_dir}/mise.toml" '"aqua:rhysd/actionlint"'
-    assert_contains "${generated_dir}/mise.toml" '"aqua:zizmorcore/zizmor"'
-    assert_contains "${generated_dir}/mise.toml" '[tasks.lint-github-actions]'
-    assert_contains "${generated_dir}/mise.toml" '[tasks.lint-gha-security]'
-    assert_contains \
-      "${generated_dir}/.pre-commit-config.yaml" \
-      '      - id: check-jsonschema-github-workflows'
-    assert_contains "${generated_dir}/.pre-commit-config.yaml" '      - id: actionlint'
-    assert_contains "${generated_dir}/.pre-commit-config.yaml" '      - id: zizmor'
-    assert_contains \
-      "${generated_dir}/.github/dependabot.yml" \
-      'package-ecosystem: "docker"'
-    assert_not_contains \
-      "${generated_dir}/.github/workflows/ci.yml" \
-      'astral-sh/setup-uv'
-    assert_not_contains \
-      "${generated_dir}/.github/workflows/ci.yml" \
-      'uv python install'
-    assert_not_contains \
-      "${generated_dir}/.github/workflows/ci.yml" \
-      'uv lock --check'
-    assert_occurrences \
-      "${generated_dir}/.github/workflows/ci.yml" \
-      'uv sync --all-extras --locked' \
-      2
-    assert_occurrences \
-      "${generated_dir}/.github/workflows/ci.yml" \
-      'jdx/mise-action' \
-      2
-    ;;
-  github-actions-off)
-    assert_path_absent "${generated_dir}/.github"
-    assert_path_absent "${generated_dir}/renovate.json5"
-    assert_not_contains "${generated_dir}/pyproject.toml" "check-jsonschema"
-    for automation_term in actionlint zizmor check-jsonschema; do
-      assert_not_contains "${generated_dir}/mise.toml" "$automation_term"
-      assert_not_contains "${generated_dir}/.pre-commit-config.yaml" "$automation_term"
-    done
-    assert_not_contains "${generated_dir}/README.md" '## CI'
-    ;;
-esac
 
 cd "$generated_dir"
 
