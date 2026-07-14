@@ -282,8 +282,8 @@ for docker_file in Dockerfile .dockerignore .hadolint.yaml; do
 done
 assert_contains \
   "${default_dir}/Dockerfile" \
-  'FROM ghcr.io/astral-sh/uv:0.11.25-trixie-slim'
-assert_not_contains "${default_dir}/Dockerfile" '0.11.25-python'
+  'FROM ghcr.io/astral-sh/uv:0.11.26-trixie-slim'
+assert_not_contains "${default_dir}/Dockerfile" '0.11.26-python'
 assert_contains \
   "${default_dir}/Dockerfile" \
   'source=.python-version,target=.python-version'
@@ -398,7 +398,7 @@ assert_not_matches \
   '^[[:space:]]*python[[:space:]]*='
 assert_contains "${python_310_dir}/.python-version" '3.10.20'
 assert_contains "${python_310_dir}/.ruff.toml" 'target-version = "py310"'
-assert_not_contains "${python_310_dir}/Dockerfile" '0.11.25-python'
+assert_not_contains "${python_310_dir}/Dockerfile" '0.11.26-python'
 
 python_311_dir="${tmp_dir}/python-3.11"
 render_project "$python_311_dir" --data python_version=3.11
@@ -409,7 +409,7 @@ assert_not_matches \
   '^[[:space:]]*python[[:space:]]*='
 assert_contains "${python_311_dir}/.python-version" '3.11.15'
 assert_contains "${python_311_dir}/.ruff.toml" 'target-version = "py311"'
-assert_not_contains "${python_311_dir}/Dockerfile" '0.11.25-python'
+assert_not_contains "${python_311_dir}/Dockerfile" '0.11.26-python'
 
 python_patch_dir="${tmp_dir}/python-3.13.2"
 render_project "$python_patch_dir" --data python_version=3.13.2
@@ -420,7 +420,7 @@ assert_not_matches \
   '^[[:space:]]*python[[:space:]]*='
 assert_contains "${python_patch_dir}/.python-version" '3.13.2'
 assert_contains "${python_patch_dir}/.ruff.toml" 'target-version = "py313"'
-assert_not_contains "${python_patch_dir}/Dockerfile" '0.11.25-python'
+assert_not_contains "${python_patch_dir}/Dockerfile" '0.11.26-python'
 
 printf 'ok -- minor pins and exact-patch versions reach every consumer\n'
 
