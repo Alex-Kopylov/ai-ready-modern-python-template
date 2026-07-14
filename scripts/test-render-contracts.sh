@@ -116,6 +116,7 @@ generation_matrix_row_count="$(
   sed -n '
     /^        include:$/,/^    [^ ]/ {
       /^          - /p
+      /^          -$/p
     }
   ' "${repo_root}/.github/workflows/ci.yml" | wc -l | tr -d '[:space:]'
 )"
