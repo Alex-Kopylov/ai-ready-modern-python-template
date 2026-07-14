@@ -28,6 +28,7 @@ The wizard keeps project-shape choices small and explicit:
 | `author_name` | empty | License owner and optional Docker maintainer |
 | `use_github_actions` | `true` | Entire GitHub automation bundle |
 | `extra_linters` | all | jscpd, typos, and markdownlint |
+| `parallel_testing` | `true` | Run pytest in parallel with pytest-xdist |
 | `coverage_fail_under` | `80` | Coverage threshold; `0` disables the gate |
 
 The same `project_name` is used for display text, distribution metadata, and
