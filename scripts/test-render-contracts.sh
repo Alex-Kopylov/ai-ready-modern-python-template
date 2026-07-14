@@ -50,6 +50,19 @@ assert_occurrences() {
     fail "expected '$2' exactly $3 times in $1; found $actual"
 }
 
+jsonc_array_entries() {
+  local file="$1"
+  local key="$2"
+
+  awk -v marker="\"${key}\": [" '
+    index($0, marker) { in_array = 1; next }
+    in_array && /^[[:space:]]*]/ { exit }
+    in_array && match($0, /"[^"]+"/) {
+      print substr($0, RSTART + 1, RLENGTH - 2)
+    }
+  ' "$file"
+}
+
 render_project() {
   local destination="$1"
   shift
@@ -252,6 +265,33 @@ printf 'ok -- wizard exposes only the supported choices\n'
 default_dir="${tmp_dir}/default"
 render_project "$default_dir"
 
+markdownlint_config="${default_dir}/.markdownlint-cli2.jsonc"
+markdownlint_globs="$(jsonc_array_entries "$markdownlint_config" globs)"
+expected_markdownlint_globs="$(printf '%s\n' \
+  README.md \
+  CONTRIBUTING.md \
+  LICENSE.md \
+  CODE_OF_CONDUCT.md \
+  CHANGELOG.md \
+  '.github/**/*.md' \
+  'docs/**/*.md')"
+[[ "$markdownlint_globs" == "$expected_markdownlint_globs" ]] || {
+  printf 'Expected markdownlint globs:\n%s\nActual markdownlint globs:\n%s\n' \
+    "$expected_markdownlint_globs" \
+    "$markdownlint_globs" >&2
+  fail "default markdownlint target set changed"
+}
+markdownlint_ignores="$(jsonc_array_entries "$markdownlint_config" ignores)"
+expected_markdownlint_ignores="$(printf '%s\n' CLAUDE.md AGENTS.md GEMINI.md)"
+[[ "$markdownlint_ignores" == "$expected_markdownlint_ignores" ]] || {
+  printf 'Expected markdownlint ignores:\n%s\nActual markdownlint ignores:\n%s\n' \
+    "$expected_markdownlint_ignores" \
+    "$markdownlint_ignores" >&2
+  fail "default markdownlint ignore set changed"
+}
+
+printf 'ok -- markdownlint targets named root files and all documentation\n'
+
 assert_matches "${default_dir}/pyproject.toml" '^\[build-system\]$'
 assert_not_matches \
   "${default_dir}/pyproject.toml" \
@@ -363,6 +403,22 @@ done
 assert_not_contains "${github_off_dir}/README.md" '## CI'
 assert_not_contains "${github_off_dir}/.dockerignore" '.github/'
 assert_not_contains "${github_off_dir}/.markdownlint-cli2.jsonc" '.github/'
+github_off_markdownlint_globs="$(
+  jsonc_array_entries "${github_off_dir}/.markdownlint-cli2.jsonc" globs
+)"
+expected_github_off_markdownlint_globs="$(printf '%s\n' \
+  README.md \
+  CONTRIBUTING.md \
+  LICENSE.md \
+  CODE_OF_CONDUCT.md \
+  CHANGELOG.md \
+  'docs/**/*.md')"
+[[ "$github_off_markdownlint_globs" == "$expected_github_off_markdownlint_globs" ]] || {
+  printf 'Expected GitHub-off markdownlint globs:\n%s\nActual globs:\n%s\n' \
+    "$expected_github_off_markdownlint_globs" \
+    "$github_off_markdownlint_globs" >&2
+  fail "GitHub-off markdownlint target set changed"
+}
 assert_not_contains "${github_off_dir}/docs/lint-strategy.md" 'GitHub Actions'
 assert_not_contains "${github_off_dir}/docs/lint-strategy.md" 'workflow file'
 
