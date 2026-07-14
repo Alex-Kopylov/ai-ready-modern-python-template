@@ -31,32 +31,10 @@ node = "22.22.0"
 
 # Python tools managed via uv (installed in venv)
 # Accessible via `uv run <tool>` after `uv sync`
-[tasks.ruff-format]
-description = "Format Python code with ruff"
-run = "uv run ruff format --force-exclude"
-
-[tasks.ruff-check]
-description = "Lint Python code with ruff"
-run = "uv run ruff check --fix --force-exclude"
-
 [tasks.flake8]
 description = "Run flake8 async checks"
 run = "uv run flake8"
 
-[tasks.ty-check]
-description = "Type check Python code with ty"
-run = "uv run ty check"
-
-[tasks.yamllint]
-description = "Lint YAML files"
-run = "uv run yamllint -c .yamllint"
-
-{% if use_github_actions -%}
-[tasks.check-jsonschema]
-description = "Validate GitHub Actions workflow schemas"
-run = "uv run check-jsonschema --builtin-schema github-workflows .github/workflows/ci.yml"
-
-{% endif -%}
 [tasks.install]
 description = "Install the project and its dependencies"
 run = "uv sync --all-extras"
@@ -103,15 +81,6 @@ run = [
     {% if use_github_actions %}
     "lint-gha-security",
     {% endif %}
-  ] },
-]
-
-[tasks.lint-python]
-description = "Run all Python lint checks"
-run = [
-  { tasks = [
-    "lint-python-fast",
-    "lint-python-deep",
   ] },
 ]
 

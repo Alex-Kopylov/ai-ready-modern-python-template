@@ -1,3 +1,5 @@
 [pytest]
 testpaths = tests
+{% if parallel_testing -%}
 addopts = -n auto
+{% endif -%}
