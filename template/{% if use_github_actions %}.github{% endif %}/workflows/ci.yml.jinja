@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - "{{ main_branch_name }}"
-  pull_request:
-    branches:
-      - "**"
+  pull_request: {}
 
 concurrency:
   group: {% raw %}${{ github.workflow }}-${{ github.ref }}{% endraw +%}
