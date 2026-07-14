@@ -9,19 +9,21 @@
 
   // Paths to lint
   "globs": [
-    "*.md",
+    "README.md",
+    "CONTRIBUTING.md",
+    "LICENSE.md",
+    "CODE_OF_CONDUCT.md",
+    "CHANGELOG.md",
 {% if use_github_actions %}
     ".github/**/*.md",
 {% endif %}
     "docs/**/*.md"
   ],
 
-  // Exclusions (AI instruction files and internal documentation)
+  // Exclusions (AI instruction files used by editor consumers)
   "ignores": [
     "CLAUDE.md",
     "AGENTS.md",
-    "GEMINI.md",
-    "docs/specs/**",
-    "docs/internal/**"
+    "GEMINI.md"
   ]
 }
