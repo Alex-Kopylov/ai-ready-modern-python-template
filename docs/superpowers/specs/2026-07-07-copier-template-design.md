@@ -78,6 +78,7 @@ The visible questions are:
 | `author_name` | string | empty | License owner and optional Docker maintainer |
 | `use_github_actions` | boolean | `true` | Complete GitHub automation bundle |
 | `extra_linters` | multiselect | all | jscpd, typos, and markdownlint |
+| `parallel_testing` | boolean | `true` | Parallel pytest via pytest-xdist; false uses serial pytest |
 | `coverage_fail_under` | integer | `80` | Coverage threshold; zero disables it |
 
 `project_name` is used unchanged for display text, distribution metadata, the
@@ -160,7 +161,10 @@ Docker and Hadolint baseline is unchanged.
 The generated CI push trigger watches `main_branch_name`; pull-request checks
 continue to accept every target branch.
 
-### Optional lint and coverage choices
+### Testing, lint, and coverage choices
+
+`parallel_testing` includes pytest-xdist and configures `pytest -n auto` by
+default. Disabling it omits pytest-xdist and uses pytest's serial default.
 
 The `extra_linters` multiselect directly controls jscpd, typos, and markdownlint
 tools, tasks, hooks, and configuration files. An empty selection remains valid
@@ -176,6 +180,7 @@ generated toolchain. It covers:
 
 - Proprietary and Skip licenses;
 - Python 3.10 and an exact patch version;
+- parallel and serial pytest configurations;
 - disabled coverage gate;
 - empty optional-linter selection;
 - unchanged project-name propagation;

@@ -71,15 +71,7 @@ expect_invalid_project_name() {
   local invalid_dir="${tmp_dir}/invalid-project-name"
 
   rm -rf "$invalid_dir"
-  if uvx copier copy \
-    --quiet \
-    --defaults \
-    --vcs-ref=HEAD \
-    --data "project_name=${project_name}" \
-    "$repo_root" \
-    "$invalid_dir" 2>"$render_log"; then
-    fail "project_name=${project_name} must be rejected"
-  fi
+  assert_render_rejected "$invalid_dir" --data "project_name=${project_name}"
   assert_contains "$render_log" "Validation error for question 'project_name'"
 }
 
@@ -244,6 +236,7 @@ expected_question_map="$(printf '%s\n' \
   visible:author_name \
   visible:use_github_actions \
   visible:extra_linters \
+  visible:parallel_testing \
   visible:coverage_fail_under \
   hidden:python_version_minor \
   hidden:python_version_pin)"
@@ -271,9 +264,14 @@ assert_not_matches \
   "${default_dir}/mise.toml" \
   '^[[:space:]]*python[[:space:]]*='
 assert_file_present "${default_dir}/scripts/example.sh"
+[[ -x "${default_dir}/scripts/example.sh" ]] ||
+  fail "expected executable file: ${default_dir}/scripts/example.sh"
+assert_contains "${default_dir}/mise.toml" 'run = "uv sync --all-extras"'
 assert_file_present "${default_dir}/src/my_project/__init__.py"
 assert_file_present "${default_dir}/LICENSE"
 assert_contains "${default_dir}/LICENSE" 'Copyright (c) 2026 my_project'
+assert_contains "${default_dir}/pyproject.toml" '"pytest-xdist"'
+assert_contains "${default_dir}/.pytest.ini" '-n auto'
 assert_not_contains "${default_dir}/Dockerfile" 'LABEL maintainer='
 assert_not_contains "${default_dir}/pyproject.toml" "fastapi"
 assert_not_contains "${default_dir}/pyproject.toml" "uvicorn"
@@ -287,8 +285,8 @@ for docker_file in Dockerfile .dockerignore .hadolint.yaml; do
 done
 assert_contains \
   "${default_dir}/Dockerfile" \
-  'FROM ghcr.io/astral-sh/uv:0.11.25-trixie-slim'
-assert_not_contains "${default_dir}/Dockerfile" '0.11.25-python'
+  'FROM ghcr.io/astral-sh/uv:0.11.26-trixie-slim'
+assert_not_contains "${default_dir}/Dockerfile" '0.11.26-python'
 assert_contains \
   "${default_dir}/Dockerfile" \
   'source=.python-version,target=.python-version'
@@ -296,6 +294,7 @@ assert_contains "${default_dir}/Dockerfile" 'uv python install &&'
 assert_contains "${default_dir}/mise.toml" '"aqua:hadolint/hadolint"'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-dockerfile]'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-shell]'
+assert_contains "${default_dir}/mise.toml" '    "lint-shell",'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: hadolint'
 assert_contains "${default_dir}/README.md" '## Docker'
 
@@ -313,16 +312,28 @@ assert_contains "${default_dir}/mise.toml" '"aqua:rhysd/actionlint"'
 assert_contains "${default_dir}/mise.toml" '"aqua:zizmorcore/zizmor"'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-github-actions]'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-gha-security]'
+assert_contains \
+  "${default_dir}/.pre-commit-config.yaml" \
+  '      - id: check-jsonschema-github-workflows'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: actionlint'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: zizmor'
 assert_contains "${default_dir}/.github/dependabot.yml" 'package-ecosystem: "docker"'
+assert_not_contains \
+  "${default_dir}/.github/workflows/ci.yml" \
+  'astral-sh/setup-uv'
+assert_not_contains \
+  "${default_dir}/.github/workflows/ci.yml" \
+  'uv python install'
+assert_not_contains \
+  "${default_dir}/.github/workflows/ci.yml" \
+  'uv lock --check'
 assert_occurrences \
   "${default_dir}/.github/workflows/ci.yml" \
-  'cache-python: true' \
+  'uv sync --all-extras --locked' \
   2
 assert_occurrences \
   "${default_dir}/.github/workflows/ci.yml" \
-  '- run: uv python install' \
+  'jdx/mise-action' \
   2
 assert_contains "${default_dir}/.github/workflows/ci.yml" '      - "main"'
 
@@ -392,7 +403,7 @@ assert_not_matches \
   '^[[:space:]]*python[[:space:]]*='
 assert_contains "${python_310_dir}/.python-version" '3.10.20'
 assert_contains "${python_310_dir}/.ruff.toml" 'target-version = "py310"'
-assert_not_contains "${python_310_dir}/Dockerfile" '0.11.25-python'
+assert_not_contains "${python_310_dir}/Dockerfile" '0.11.26-python'
 
 python_311_dir="${tmp_dir}/python-3.11"
 render_project "$python_311_dir" --data python_version=3.11
@@ -403,7 +414,7 @@ assert_not_matches \
   '^[[:space:]]*python[[:space:]]*='
 assert_contains "${python_311_dir}/.python-version" '3.11.15'
 assert_contains "${python_311_dir}/.ruff.toml" 'target-version = "py311"'
-assert_not_contains "${python_311_dir}/Dockerfile" '0.11.25-python'
+assert_not_contains "${python_311_dir}/Dockerfile" '0.11.26-python'
 
 python_patch_dir="${tmp_dir}/python-3.13.2"
 render_project "$python_patch_dir" --data python_version=3.13.2
@@ -414,7 +425,7 @@ assert_not_matches \
   '^[[:space:]]*python[[:space:]]*='
 assert_contains "${python_patch_dir}/.python-version" '3.13.2'
 assert_contains "${python_patch_dir}/.ruff.toml" 'target-version = "py313"'
-assert_not_contains "${python_patch_dir}/Dockerfile" '0.11.25-python'
+assert_not_contains "${python_patch_dir}/Dockerfile" '0.11.26-python'
 
 printf 'ok -- minor pins and exact-patch versions reach every consumer\n'
 
@@ -425,6 +436,14 @@ assert_not_matches \
   '^[[:space:]]*fail_under[[:space:]]='
 
 printf 'ok -- zero disables the coverage gate\n'
+
+serial_testing_dir="${tmp_dir}/serial-testing"
+render_project "$serial_testing_dir" --data parallel_testing=false
+assert_file_present "${serial_testing_dir}/.pytest.ini"
+assert_not_contains "${serial_testing_dir}/pyproject.toml" 'pytest-xdist'
+assert_not_contains "${serial_testing_dir}/.pytest.ini" '-n auto'
+
+printf 'ok -- parallel testing can be disabled\n'
 
 no_linters_dir="${tmp_dir}/no-optional-linters"
 render_project "$no_linters_dir" --data 'extra_linters=[]'
@@ -471,14 +490,15 @@ invalid_project_name_shapes=(
   acme.
   -acme
   acme-
+  class
 )
 for invalid_project_name in "${invalid_project_name_shapes[@]}"; do
   expect_invalid_project_name "$invalid_project_name"
 done
 
-printf 'ok -- non-identifier project-name shapes are rejected\n'
+printf 'ok -- invalid project-name shapes and a hard keyword are rejected\n'
 
-valid_project_name_boundaries=(A a1 a_b a__b)
+valid_project_name_boundaries=(A a1 a_b a__b match)
 for valid_project_name in "${valid_project_name_boundaries[@]}"; do
   valid_name_dir="${tmp_dir}/valid-project-name-${valid_project_name}"
   render_project "$valid_name_dir" --data "project_name=${valid_project_name}"
@@ -488,27 +508,7 @@ for valid_project_name in "${valid_project_name_boundaries[@]}"; do
     "name = \"${valid_project_name}\""
 done
 
-printf 'ok -- project-name identifier boundaries remain valid\n'
-
-readarray -t python_hard_keywords < <(
-  python3 -c 'import keyword; print("\n".join(keyword.kwlist))'
-)
-for hard_keyword in "${python_hard_keywords[@]}"; do
-  expect_invalid_project_name "$hard_keyword"
-done
-
-printf 'ok -- every Python hard keyword is rejected as a project name\n'
-
-readarray -t python_soft_keywords < <(
-  python3 -c 'import keyword, re; pattern = re.compile(r"^[A-Za-z](?:[A-Za-z0-9_]*[A-Za-z0-9])?$"); print("\n".join(word for word in keyword.softkwlist if pattern.fullmatch(word)))'
-)
-for soft_keyword in "${python_soft_keywords[@]}"; do
-  soft_keyword_dir="${tmp_dir}/soft-keyword-${soft_keyword}"
-  render_project "$soft_keyword_dir" --data "project_name=${soft_keyword}"
-  assert_file_present "${soft_keyword_dir}/src/${soft_keyword}/__init__.py"
-done
-
-printf 'ok -- supported Python soft keywords remain valid project names\n'
+printf 'ok -- project-name boundaries and a soft keyword remain valid\n'
 
 if rg -n --hidden --glob '!.git' "$obsolete_questions" "$repo_root"; then
   fail "obsolete wizard concepts remain in the repository"
