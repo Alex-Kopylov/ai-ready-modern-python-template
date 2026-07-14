@@ -118,6 +118,13 @@ extra_linters:
     - typos
     - markdownlint
 
+parallel_testing:
+  type: bool
+  help: >-
+    Run pytest in parallel with pytest-xdist (-n auto); No uses pytest's
+    serial default.
+  default: true
+
 coverage_fail_under:
   type: int
   help: Minimum coverage percentage; 0 leaves the coverage gate off.
@@ -137,19 +144,8 @@ python_version_pin:
   # Exact patches pass through verbatim. Supported minors map to fresh managed
   # builds verified with pinned uv 0.11.27; any other minor passes through.
   default: >-
-    {% if python_version.split('.') | length == 3 -%}
-    {{ python_version }}
-    {%- elif python_version == '3.10' -%}
-    3.10.20
-    {%- elif python_version == '3.11' -%}
-    3.11.15
-    {%- elif python_version == '3.12' -%}
-    3.12.13
-    {%- elif python_version == '3.13' -%}
-    3.13.14
-    {%- elif python_version == '3.14' -%}
-    3.14.6
-    {%- else -%}
-    {{ python_version }}
-    {%- endif %}
+    {{ {
+      '3.10': '3.10.20', '3.11': '3.11.15', '3.12': '3.12.13',
+      '3.13': '3.13.14', '3.14': '3.14.6',
+    }.get(python_version, python_version) }}
   when: false
