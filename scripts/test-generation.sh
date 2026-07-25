@@ -161,8 +161,13 @@ rm scripts/example.sh
 mise run lint-shell ||
   fail "lint-shell must succeed when no shell scripts exist"
 git checkout -- scripts/example.sh
-[[ -z "$(git status --porcelain)" ]] ||
-  fail "lint-shell probes must leave the generated project tree clean"
+# Scope the residue check to the probe target. The tree already carries
+# unrelated churn at this point (uv.lock, .venv) from the earlier install steps,
+# so a whole-tree `git status` check would be a false positive.
+[[ -x scripts/example.sh ]] ||
+  fail "lint-shell probes did not restore an executable scripts/example.sh"
+git diff --quiet -- scripts/example.sh ||
+  fail "lint-shell probes did not restore scripts/example.sh"
 
 mise run test
 mise run test-cov
