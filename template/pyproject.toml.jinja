@@ -22,7 +22,7 @@ dev = [
   "deptry>=0.25.1",
   # Testing
   "pytest",
-  {% if parallel_testing %}
+  {# Non-trimming is deliberate; restoring -%} breaks taplo fmt --check. #}{% if parallel_testing %}
   "pytest-xdist",
   {% endif %}
   "pytest-cov>=7.1.0",
@@ -30,7 +30,7 @@ dev = [
   "prek",
   # YAML linting
   "yamllint",
-  {% if use_github_actions %}
+  {# Non-trimming is deliberate; restoring -%} breaks taplo fmt --check. #}{% if use_github_actions %}
   # JSON schema validation
   "check-jsonschema",
   {% endif %}

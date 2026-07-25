@@ -8,8 +8,10 @@ include = ["**/*.toml"]
 exclude = ["**/node_modules/**", "**/target/**", "**/.venv/**"]
 
 [formatting]
-# NOTE: Formatting options are intentionally relaxed.
-# Preserve manual key ordering and avoid alignment-only diffs.
+# The two array options below are load-bearing: removing either makes a fresh
+# render drift under taplo fmt --check in .ruff.toml and mise.toml.
+# All other options deliberately pin Taplo's current defaults against upstream
+# drift; they are intentional, not dead configuration.
 
 # Keep table entries unaligned
 align_entries = false

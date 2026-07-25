@@ -51,16 +51,16 @@ run = [
   { tasks = [
     "lint-python-fast",
     "lint-dockerfile",
-    {% if "markdownlint" in extra_linters %}
+    {# Non-trimming is deliberate; restoring -%} breaks taplo fmt --check. #}{% if "markdownlint" in extra_linters %}
     "lint-md",
     {% endif %}
     "lint-yml",
     "lint-json",
     "lint-toml",
-    {% if use_github_actions %}
+    {# Non-trimming is deliberate; restoring -%} breaks taplo fmt --check. #}{% if use_github_actions %}
     "lint-github-actions",
     {% endif %}
-    {% if "typos" in extra_linters %}
+    {# Non-trimming is deliberate; restoring -%} breaks taplo fmt --check. #}{% if "typos" in extra_linters %}
     "lint-typos",
     {% endif %}
   ] },
@@ -73,12 +73,12 @@ run = [
     "lint-fast",
     "lint-python-deep",
     "lint-deps",
-    {% if "jscpd" in extra_linters %}
+    {# Non-trimming is deliberate; restoring -%} breaks taplo fmt --check. #}{% if "jscpd" in extra_linters %}
     "lint-duplicates",
     {% endif %}
     "lint-secrets",
     "lint-audit",
-    {% if use_github_actions %}
+    {# Non-trimming is deliberate; restoring -%} breaks taplo fmt --check. #}{% if use_github_actions %}
     "lint-gha-security",
     {% endif %}
   ] },
