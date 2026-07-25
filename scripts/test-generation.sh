@@ -165,6 +165,25 @@ mise exec -- uv run python -c "import my_project"
 mise exec -- uv build --out-dir "${tmp_dir}/dist"
 mise run lint
 
+mise run lint-shell ||
+  fail "lint-shell must succeed with the baseline shell script present"
+printf '\nls $HOME\n' >> scripts/example.sh
+if mise run lint-shell; then
+  fail "lint-shell must reject a deliberate ShellCheck violation"
+fi
+git checkout -- scripts/example.sh
+rm scripts/example.sh
+mise run lint-shell ||
+  fail "lint-shell must succeed when no shell scripts exist"
+git checkout -- scripts/example.sh
+# Scope the residue check to the probe target. The tree already carries
+# unrelated churn at this point (uv.lock, .venv) from the earlier install steps,
+# so a whole-tree `git status` check would be a false positive.
+[[ -x scripts/example.sh ]] ||
+  fail "lint-shell probes did not restore an executable scripts/example.sh"
+git diff --quiet -- scripts/example.sh ||
+  fail "lint-shell probes did not restore scripts/example.sh"
+
 printf '#bad heading\n\n\n\nx\n' > EXTRA.md
 if mise run lint-md; then
   fail "markdownlint accepted non-conforming root EXTRA.md"
@@ -220,7 +239,8 @@ fi
 sed -i '$a# Installed-hook PATH regression fixture.' pyproject.toml
 sed -i 's/Hello, world!/Hello, hook smoke!/' src/my_project/main.py
 sed -i '$a# Installed-hook PATH regression fixture.' .copier-answers.yml
-hook_files=(pyproject.toml src/my_project/main.py .copier-answers.yml)
+sed -i '$a# Installed-hook ShellCheck regression fixture.' scripts/example.sh
+hook_files=(pyproject.toml src/my_project/main.py .copier-answers.yml scripts/example.sh)
 if [[ -f .github/workflows/ci.yml ]]; then
   sed -i '$a# Installed-hook PATH regression fixture.' .github/workflows/ci.yml
   hook_files+=(.github/workflows/ci.yml)
