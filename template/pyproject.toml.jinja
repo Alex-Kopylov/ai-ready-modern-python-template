@@ -1,3 +1,6 @@
+{# Jinja blocks in this file intentionally use the non-trimming `%}` form.
+   Restoring the whitespace-trimming `-%}` form changes the rendered TOML
+   layout and breaks the `taplo fmt --check` gate. See template/taplo.toml. #}
 [project]
 name = "{{ project_name }}"
 version = "0.1.0"
@@ -22,18 +25,18 @@ dev = [
   "deptry>=0.25.1",
   # Testing
   "pytest",
-  {% if parallel_testing -%}
+  {% if parallel_testing %}
   "pytest-xdist",
-  {% endif -%}
+  {% endif %}
   "pytest-cov>=7.1.0",
   # Git hooks
   "prek",
   # YAML linting
   "yamllint",
-  {% if use_github_actions -%}
+  {% if use_github_actions %}
   # JSON schema validation
   "check-jsonschema",
-  {% endif -%}
+  {% endif %}
 ]
 
 [build-system]
