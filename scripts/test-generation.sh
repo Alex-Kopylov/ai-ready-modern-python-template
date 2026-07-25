@@ -176,8 +176,15 @@ if mise run lint-md; then
 fi
 rm -rf docs/specs
 
-[[ -z "$(git status --porcelain)" ]] ||
-  fail "markdownlint probes left the generated tree dirty"
+# Scope the residue check to the probe artefacts. The tree already carries
+# unrelated churn at this point (uv.lock, .venv) from the earlier install steps,
+# so a whole-tree `git status` check would be a false positive.
+for probe in EXTRA.md .claude docs/specs; do
+  [[ ! -e "$probe" ]] ||
+    fail "markdownlint probe left ${probe} behind in the generated project"
+done
+git diff --quiet -- AGENTS.md ||
+  fail "markdownlint probe did not restore AGENTS.md"
 
 mise run test
 mise run test-cov
