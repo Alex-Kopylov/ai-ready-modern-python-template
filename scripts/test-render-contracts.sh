@@ -24,7 +24,7 @@ assert_path_absent() {
 }
 
 assert_contains() {
-  grep -Fq -- "$2" "$1" || fail "expected '$2' in $1"
+  grep -Fq -- "$2" "$1" || fail "${3:-expected '$2' in $1}"
 }
 
 assert_not_contains() {
@@ -274,6 +274,16 @@ assert_not_contains "${default_dir}/pyproject.toml" "fastapi"
 assert_not_contains "${default_dir}/pyproject.toml" "uvicorn"
 assert_not_contains "${default_dir}/Dockerfile" "fastapi"
 assert_not_contains "${default_dir}/Dockerfile" "uvicorn"
+assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: taplo-fmt'
+assert_contains "${default_dir}/mise.toml" 'taplo fmt'
+assert_contains \
+  "${default_dir}/taplo.toml" \
+  'array_auto_collapse = false' \
+  "missing load-bearing Taplo option array_auto_collapse = false; removing either option reintroduces formatter drift"
+assert_contains \
+  "${default_dir}/taplo.toml" \
+  'array_auto_expand = false' \
+  "missing load-bearing Taplo option array_auto_expand = false; removing either option reintroduces formatter drift"
 
 printf 'ok -- default project is installable and framework-neutral\n'
 
