@@ -294,6 +294,10 @@ assert_contains "${default_dir}/Dockerfile" 'uv python install &&'
 assert_contains "${default_dir}/mise.toml" '"aqua:hadolint/hadolint"'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-dockerfile]'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-shell]'
+assert_contains \
+  "${default_dir}/mise.toml" \
+  '-exec mise exec -- shellcheck {} +'
+assert_not_contains "${default_dir}/mise.toml" 'shellcheck scripts/*.sh'
 assert_contains "${default_dir}/mise.toml" '    "lint-shell",'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: hadolint'
 assert_contains "${default_dir}/README.md" '## Docker'

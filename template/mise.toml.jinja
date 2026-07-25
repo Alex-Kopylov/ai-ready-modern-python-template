@@ -106,7 +106,7 @@ run = "mise exec -- hadolint Dockerfile"
 
 [tasks.lint-shell]
 description = "Lint shell scripts with ShellCheck"
-run = "mise exec -- shellcheck scripts/*.sh"
+run = "find . -name '*.sh' -not -path './.venv/*' -not -path './node_modules/*' -exec mise exec -- shellcheck {} +"
 
 {% if "markdownlint" in extra_linters -%}
 [tasks.lint-md]

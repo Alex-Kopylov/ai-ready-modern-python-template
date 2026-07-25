@@ -149,6 +149,21 @@ printf \
 mise exec -- uv run python -c "import my_project"
 mise exec -- uv build --out-dir "${tmp_dir}/dist"
 mise run lint
+
+mise run lint-shell ||
+  fail "lint-shell must succeed with the baseline shell script present"
+printf '\nls $HOME\n' >> scripts/example.sh
+if mise run lint-shell; then
+  fail "lint-shell must reject a deliberate ShellCheck violation"
+fi
+git checkout -- scripts/example.sh
+rm scripts/example.sh
+mise run lint-shell ||
+  fail "lint-shell must succeed when no shell scripts exist"
+git checkout -- scripts/example.sh
+[[ -z "$(git status --porcelain)" ]] ||
+  fail "lint-shell probes must leave the generated project tree clean"
+
 mise run test
 mise run test-cov
 
