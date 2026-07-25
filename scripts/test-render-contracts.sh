@@ -268,11 +268,7 @@ render_project "$default_dir"
 markdownlint_config="${default_dir}/.markdownlint-cli2.jsonc"
 markdownlint_globs="$(jsonc_array_entries "$markdownlint_config" globs)"
 expected_markdownlint_globs="$(printf '%s\n' \
-  README.md \
-  CONTRIBUTING.md \
-  LICENSE.md \
-  CODE_OF_CONDUCT.md \
-  CHANGELOG.md \
+  '*.md' \
   '.github/**/*.md' \
   'docs/**/*.md')"
 [[ "$markdownlint_globs" == "$expected_markdownlint_globs" ]] || {
@@ -282,7 +278,20 @@ expected_markdownlint_globs="$(printf '%s\n' \
   fail "default markdownlint target set changed"
 }
 markdownlint_ignores="$(jsonc_array_entries "$markdownlint_config" ignores)"
-expected_markdownlint_ignores="$(printf '%s\n' CLAUDE.md AGENTS.md GEMINI.md)"
+expected_markdownlint_ignores="$(printf '%s\n' \
+  CLAUDE.md \
+  AGENTS.md \
+  GEMINI.md \
+  '.claude/**' \
+  '.codex/**' \
+  '.cursor/**' \
+  '.gemini/**' \
+  LICENSE.md \
+  '.venv/**' \
+  'goals/**' \
+  'node_modules/**' \
+  'build/**' \
+  'dist/**')"
 [[ "$markdownlint_ignores" == "$expected_markdownlint_ignores" ]] || {
   printf 'Expected markdownlint ignores:\n%s\nActual markdownlint ignores:\n%s\n' \
     "$expected_markdownlint_ignores" \
@@ -290,7 +299,7 @@ expected_markdownlint_ignores="$(printf '%s\n' CLAUDE.md AGENTS.md GEMINI.md)"
   fail "default markdownlint ignore set changed"
 }
 
-printf 'ok -- markdownlint targets named root files and all documentation\n'
+printf 'ok -- markdownlint targets root and documentation globs with explicit ignores\n'
 
 assert_matches "${default_dir}/pyproject.toml" '^\[build-system\]$'
 assert_not_matches \
@@ -407,11 +416,7 @@ github_off_markdownlint_globs="$(
   jsonc_array_entries "${github_off_dir}/.markdownlint-cli2.jsonc" globs
 )"
 expected_github_off_markdownlint_globs="$(printf '%s\n' \
-  README.md \
-  CONTRIBUTING.md \
-  LICENSE.md \
-  CODE_OF_CONDUCT.md \
-  CHANGELOG.md \
+  '*.md' \
   'docs/**/*.md')"
 [[ "$github_off_markdownlint_globs" == "$expected_github_off_markdownlint_globs" ]] || {
   printf 'Expected GitHub-off markdownlint globs:\n%s\nActual globs:\n%s\n' \

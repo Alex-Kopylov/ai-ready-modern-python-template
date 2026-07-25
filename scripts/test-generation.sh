@@ -149,6 +149,36 @@ printf \
 mise exec -- uv run python -c "import my_project"
 mise exec -- uv build --out-dir "${tmp_dir}/dist"
 mise run lint
+
+printf '#bad heading\n\n\n\nx\n' > EXTRA.md
+if mise run lint-md; then
+  fail "markdownlint accepted non-conforming root EXTRA.md"
+fi
+rm EXTRA.md
+
+mkdir -p .claude
+printf '#bad heading\n\n\n\nx\n' > .claude/probe.md
+mise run lint-md ||
+  fail "markdownlint did not ignore .claude/probe.md"
+rm -rf .claude
+
+agents_backup="${tmp_dir}/AGENTS.md.probe-backup"
+cp AGENTS.md "$agents_backup"
+printf '#bad heading\n\n\n\nx\n' > AGENTS.md
+mise run lint-md ||
+  fail "markdownlint did not ignore root AGENTS.md"
+cp "$agents_backup" AGENTS.md
+
+mkdir -p docs/specs
+printf '#bad heading\n\n\n\nx\n' > docs/specs/probe.md
+if mise run lint-md; then
+  fail "markdownlint accepted non-conforming docs/specs/probe.md"
+fi
+rm -rf docs/specs
+
+[[ -z "$(git status --porcelain)" ]] ||
+  fail "markdownlint probes left the generated tree dirty"
+
 mise run test
 mise run test-cov
 

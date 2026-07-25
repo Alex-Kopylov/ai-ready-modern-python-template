@@ -9,21 +9,34 @@
 
   // Paths to lint
   "globs": [
-    "README.md",
-    "CONTRIBUTING.md",
-    "LICENSE.md",
-    "CODE_OF_CONDUCT.md",
-    "CHANGELOG.md",
+    "*.md",
 {% if use_github_actions %}
     ".github/**/*.md",
 {% endif %}
     "docs/**/*.md"
   ],
 
-  // Exclusions (AI instruction files used by editor consumers)
+  // These exclusions are load-bearing. The root glob above reaches every
+  // top-level document, so the entries below are what keep machine-consumed
+  // files out of the linter. Do not delete them as unreachable -- they enforce
+  // the policy set in commit 3db8a2e (AI agent working files are not lint
+  // targets).
   "ignores": [
+    // AI agent working files -- consumed by agents, not humans
     "CLAUDE.md",
     "AGENTS.md",
-    "GEMINI.md"
+    "GEMINI.md",
+    ".claude/**",
+    ".codex/**",
+    ".cursor/**",
+    ".gemini/**",
+    // Legal text -- reformatting can break SPDX and license-scanner detection
+    "LICENSE.md",
+    // Vendored trees and build output
+    ".venv/**",
+    "goals/**",
+    "node_modules/**",
+    "build/**",
+    "dist/**"
   ]
 }
