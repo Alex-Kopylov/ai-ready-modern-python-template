@@ -184,6 +184,42 @@ git checkout -- scripts/example.sh
 git diff --quiet -- scripts/example.sh ||
   fail "lint-shell probes did not restore scripts/example.sh"
 
+printf '#bad heading\n\n\n\nx\n' > EXTRA.md
+if mise run lint-md; then
+  fail "markdownlint accepted non-conforming root EXTRA.md"
+fi
+rm EXTRA.md
+
+mkdir -p .claude
+printf '#bad heading\n\n\n\nx\n' > .claude/probe.md
+mise run lint-md ||
+  fail "markdownlint did not ignore .claude/probe.md"
+rm -rf .claude
+
+agents_backup="${tmp_dir}/AGENTS.md.probe-backup"
+cp AGENTS.md "$agents_backup"
+printf '#bad heading\n\n\n\nx\n' > AGENTS.md
+mise run lint-md ||
+  fail "markdownlint did not ignore root AGENTS.md"
+cp "$agents_backup" AGENTS.md
+
+mkdir -p docs/specs
+printf '#bad heading\n\n\n\nx\n' > docs/specs/probe.md
+if mise run lint-md; then
+  fail "markdownlint accepted non-conforming docs/specs/probe.md"
+fi
+rm -rf docs/specs
+
+# Scope the residue check to the probe artefacts. The tree already carries
+# unrelated churn at this point (uv.lock, .venv) from the earlier install steps,
+# so a whole-tree `git status` check would be a false positive.
+for probe in EXTRA.md .claude docs/specs; do
+  [[ ! -e "$probe" ]] ||
+    fail "markdownlint probe left ${probe} behind in the generated project"
+done
+git diff --quiet -- AGENTS.md ||
+  fail "markdownlint probe did not restore AGENTS.md"
+
 mise run test
 mise run test-cov
 
