@@ -376,6 +376,9 @@ assert_contains "${default_dir}/mise.toml" '"aqua:zizmorcore/zizmor"'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-github-actions]'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-gha-security]'
 assert_contains \
+  "${default_dir}/mise.toml" \
+  'run = "mise exec -- zizmor --collect=workflows .github/workflows"'
+assert_contains \
   "${default_dir}/.pre-commit-config.yaml" \
   '      - id: check-jsonschema-github-workflows'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: actionlint'
