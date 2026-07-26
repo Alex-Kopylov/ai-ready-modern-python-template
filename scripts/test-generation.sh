@@ -165,6 +165,33 @@ mise exec -- uv run python -c "import my_project"
 mise exec -- uv build --out-dir "${tmp_dir}/dist"
 mise run lint
 
+if [[ "$scenario" == github-actions-on ]]; then
+  for workflow_extension in yml yaml; do
+    workflow_probe=".github/workflows/zizmor-probe.${workflow_extension}"
+    probe_output="${tmp_dir}/zizmor-probe-${workflow_extension}.txt"
+    # shellcheck disable=SC2016  # GitHub expression must remain literal.
+    printf '%s\n' \
+      'name: Zizmor probe' \
+      'on: issues' \
+      'jobs:' \
+      '  probe:' \
+      '    runs-on: ubuntu-latest' \
+      '    steps:' \
+      '      - run: echo "${{ github.event.issue.title }}"' \
+      > "$workflow_probe"
+    if mise run lint-gha-security > "$probe_output" 2>&1; then
+      fail "lint-gha-security did not scan .${workflow_extension} workflows"
+    fi
+    grep -Fq -- 'error[template-injection]' "$probe_output" ||
+      fail "lint-gha-security failed without the expected template-injection"
+    grep -Fq -- "$workflow_probe" "$probe_output" ||
+      fail "lint-gha-security output did not name ${workflow_probe}"
+    rm "$workflow_probe"
+  done
+  mise run lint-gha-security ||
+    fail "lint-gha-security must pass after removing workflow probes"
+fi
+
 mise run lint-shell ||
   fail "lint-shell must succeed with the baseline shell script present"
 printf '\nls $HOME\n' >> scripts/example.sh

@@ -159,7 +159,7 @@ run = "mise exec -- gitleaks git --redact --no-banner"
 {% if use_github_actions -%}
 [tasks.lint-gha-security]
 description = "Scan GitHub Actions workflows for security issues"
-run = "mise exec -- zizmor .github/workflows/ci.yml"
+run = "mise exec -- zizmor --collect=workflows .github/workflows"
 
 {% endif -%}
 [tasks.lint-audit]
