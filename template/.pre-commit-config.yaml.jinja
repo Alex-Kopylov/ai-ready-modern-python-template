@@ -56,9 +56,9 @@ repos:
         language: system
         types: [python]
 
-      - id: flake8-async
-        name: flake8-async (async patterns)
-        entry: mise exec -- uv run flake8 --select=ASYNC
+      - id: flake8
+        name: flake8 (async + Pydantic patterns)
+        entry: mise exec -- uv run flake8
         language: system
         types: [python]
         exclude: ^(tests/|scripts/|docs/)
@@ -172,4 +172,3 @@ repos:
 # - markdownlint-cli2: pass_filenames=false causes it to scan gitignored docs/plans/
 #   (auto-generated reports that don't conform to style rules); removed to reduce noise
 # - vulture: High false positive rate, advisory-only (needs whitelist)
-# - flake8-pydantic: Niche Pydantic feedback, real-time via CC hooks
