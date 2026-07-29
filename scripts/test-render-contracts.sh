@@ -250,6 +250,7 @@ expected_question_map="$(printf '%s\n' \
   visible:use_github_actions \
   visible:extra_linters \
   visible:parallel_testing \
+  visible:use_mutmut \
   visible:coverage_fail_under \
   hidden:python_version_minor \
   hidden:python_version_pin)"
@@ -320,6 +321,7 @@ assert_file_present "${default_dir}/src/my_project/__init__.py"
 assert_file_present "${default_dir}/LICENSE"
 assert_contains "${default_dir}/LICENSE" 'Copyright (c) 2026 my_project'
 assert_contains "${default_dir}/pyproject.toml" '"pytest-xdist"'
+assert_contains "${default_dir}/pyproject.toml" '"mutmut"'
 assert_contains "${default_dir}/.pytest.ini" '-n auto'
 assert_not_contains "${default_dir}/Dockerfile" 'LABEL maintainer='
 assert_not_contains "${default_dir}/pyproject.toml" "fastapi"
@@ -522,6 +524,12 @@ assert_not_contains "${serial_testing_dir}/pyproject.toml" 'pytest-xdist'
 assert_not_contains "${serial_testing_dir}/.pytest.ini" '-n auto'
 
 printf 'ok -- parallel testing can be disabled\n'
+
+no_mutmut_dir="${tmp_dir}/no-mutmut"
+render_project "$no_mutmut_dir" --data use_mutmut=false
+assert_not_contains "${no_mutmut_dir}/pyproject.toml" '"mutmut"'
+
+printf 'ok -- mutmut can be excluded from development dependencies\n'
 
 no_linters_dir="${tmp_dir}/no-optional-linters"
 render_project "$no_linters_dir" --data 'extra_linters=[]'
