@@ -79,7 +79,7 @@ python_version:
     3.11.9 are expert mode and must be available from the pinned uv release.
   default: "3.14"
   # Floor computed from requires-python of the latest dev toolchain deps:
-  # deptry, pytest, yamllint, and check-jsonschema all require >=3.10.
+  # deptry, mutmut, pytest, yamllint, and check-jsonschema all require >=3.10.
   validator: >-
     {% if not (python_version | regex_search('^3\.\d+(\.\d+)?$'))
        or (python_version.split('.')[1] | int) < 10 %}
@@ -123,6 +123,11 @@ parallel_testing:
   help: >-
     Run pytest in parallel with pytest-xdist (-n auto); No uses pytest's
     serial default.
+  default: true
+
+use_mutmut:
+  type: bool
+  help: Include mutmut mutation testing as a development dependency.
   default: true
 
 coverage_fail_under:

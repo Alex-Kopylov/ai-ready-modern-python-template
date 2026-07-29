@@ -29,6 +29,10 @@ dev = [
   "pytest-xdist",
   {% endif %}
   "pytest-cov>=7.1.0",
+  {% if use_mutmut %}
+  # Mutation testing
+  "mutmut",
+  {% endif %}
   # Git hooks
   "prek",
   # YAML linting

@@ -79,6 +79,7 @@ The visible questions are:
 | `use_github_actions` | boolean | `true` | Complete GitHub automation bundle |
 | `extra_linters` | multiselect | all | jscpd, typos, and markdownlint |
 | `parallel_testing` | boolean | `true` | Parallel pytest via pytest-xdist; false uses serial pytest |
+| `use_mutmut` | boolean | `true` | Include mutmut mutation testing as a development dependency |
 | `coverage_fail_under` | integer | `80` | Coverage threshold; zero disables it |
 
 `project_name` is used unchanged for display text, distribution metadata, the
@@ -166,6 +167,9 @@ continue to accept every target branch.
 `parallel_testing` includes pytest-xdist and configures `pytest -n auto` by
 default. Disabling it omits pytest-xdist and uses pytest's serial default.
 
+`use_mutmut` includes mutmut in the development dependency group by default.
+Disabling it omits the package.
+
 The `extra_linters` multiselect directly controls jscpd, typos, and markdownlint
 tools, tasks, hooks, and configuration files. An empty selection remains valid
 and leaves no dangling task references.
@@ -181,6 +185,7 @@ generated toolchain. It covers:
 - Proprietary and Skip licenses;
 - Python 3.10 and an exact patch version;
 - parallel and serial pytest configurations;
+- default and disabled mutmut development dependencies;
 - disabled coverage gate;
 - empty optional-linter selection;
 - unchanged project-name propagation;
