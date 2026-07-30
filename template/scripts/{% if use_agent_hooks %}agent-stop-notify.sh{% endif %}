@@ -9,7 +9,7 @@ if [[ "${kernel_name}" == Darwin ]] &&
   [[ -r /System/Library/Sounds/Glass.aiff ]]; then
   afplay /System/Library/Sounds/Glass.aiff >/dev/null 2>&1 &
   printf '{}\n'
-elif [[ "$client" == claude ]]; then
+elif [[ "${client}" == claude ]]; then
   # Claude hooks have no controlling terminal. Ask Claude Code to emit BEL.
   printf '{"terminalSequence":"\\u0007"}\n'
 else
