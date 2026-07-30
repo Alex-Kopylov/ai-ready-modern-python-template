@@ -50,6 +50,34 @@ assert_occurrences() {
     fail "expected '$2' exactly $3 times in $1; found $actual"
 }
 
+assert_git_ignored() {
+  local repo="$1"
+  local path="$2"
+
+  git -C "$repo" -c core.excludesFile=/dev/null \
+    check-ignore --no-index --quiet "$path" ||
+    fail "expected gitignored path: $path"
+}
+
+assert_git_not_ignored() {
+  local repo="$1"
+  local path="$2"
+  local status=0
+
+  git -C "$repo" -c core.excludesFile=/dev/null \
+    check-ignore --no-index --quiet "$path" || status=$?
+  case "$status" in
+    0)
+      fail "unexpected gitignored path: $path"
+      ;;
+    1)
+      ;;
+    *)
+      fail "git check-ignore failed for path: $path"
+      ;;
+  esac
+}
+
 jsonc_array_entries() {
   local file="$1"
   local key="$2"
@@ -109,6 +137,40 @@ assert_not_contains "${repo_root}/copier.yml" "setup""_mode == 'custom'"
 assert_not_matches "${repo_root}/copier.yml" '^_tasks:'
 assert_contains "${repo_root}/copier.yml" '!!python/name:keyword.iskeyword'
 assert_not_contains "${repo_root}/copier.yml" "['False', 'None', 'True'"
+assert_contains "${repo_root}/copier.yml" '    mise run verify'
+assert_not_matches "${repo_root}/copier.yml" '^    mise run lint$'
+assert_contains "${repo_root}/AGENTS.md" \
+  '`mise run verify`: build, run the full lint gate, and run coverage tests.'
+
+after_generation_commands="$(
+  awk '
+    $0 == "## After Generation" {
+      in_section = 1
+      next
+    }
+    in_section && $0 == "```bash" {
+      in_block = 1
+      next
+    }
+    in_block && $0 == "```" {
+      exit
+    }
+    in_block {
+      print
+    }
+  ' "${repo_root}/README.md"
+)"
+expected_after_generation_commands="$(printf '%s\n' \
+  'cd my-project' \
+  'git init -b main' \
+  'git add .' \
+  'git commit -m "chore: initial project from template"' \
+  'mise install' \
+  'mise run install' \
+  'mise run install-hooks' \
+  'mise run verify')"
+[[ "$after_generation_commands" == "$expected_after_generation_commands" ]] ||
+  fail "root README After Generation commands must end with mise run verify"
 
 default_python_version="$(
   awk '
@@ -265,6 +327,76 @@ printf 'ok -- wizard exposes only the supported choices\n'
 
 default_dir="${tmp_dir}/default"
 render_project "$default_dir"
+
+assert_file_present "${default_dir}/CLAUDE.md"
+printf '@AGENTS.md\n' | cmp --silent - "${default_dir}/CLAUDE.md" ||
+  fail "CLAUDE.md must contain only @AGENTS.md followed by a newline"
+
+git -C "$default_dir" init --quiet
+assert_git_ignored "$default_dir" "CLAUDE.local.md"
+assert_git_ignored "$default_dir" ".claude/settings.local.json"
+assert_git_not_ignored "$default_dir" ".claude/settings.json"
+assert_git_not_ignored "$default_dir" ".claude/commands/review.md"
+
+verify_task="$(
+  awk '
+    $0 == "[tasks.verify]" {
+      in_task = 1
+    }
+    in_task && $0 ~ /^\[tasks\./ && $0 != "[tasks.verify]" {
+      exit
+    }
+    in_task {
+      print
+    }
+  ' "${default_dir}/mise.toml"
+)"
+expected_verify_task="$(printf '%s\n' \
+  '[tasks.verify]' \
+  'description = "Build, lint, and run the coverage test suite"' \
+  'run = [' \
+  '  "uv build",' \
+  '  { tasks = ["lint"] },' \
+  '  { tasks = ["test-cov"] },' \
+  ']')"
+[[ "$verify_task" == "$expected_verify_task" ]] || {
+  printf 'Expected verify task:\n%s\nActual verify task:\n%s\n' \
+    "$expected_verify_task" \
+    "$verify_task" >&2
+  fail "verify task must run build, full lint, and coverage tests in order"
+}
+assert_contains "${default_dir}/AGENTS.md" \
+  '`mise run verify`: build, run the full lint gate, and run coverage tests.'
+assert_contains "${default_dir}/README.md" \
+  '`mise run verify`: build, run the full lint gate, and run coverage tests.'
+
+quick_start_commands="$(
+  awk '
+    $0 == "## Quick Start" {
+      in_section = 1
+      next
+    }
+    in_section && $0 == "```bash" {
+      in_block = 1
+      next
+    }
+    in_block && $0 == "```" {
+      exit
+    }
+    in_block {
+      print
+    }
+  ' "${default_dir}/README.md"
+)"
+expected_quick_start_commands="$(printf '%s\n' \
+  'mise install' \
+  'mise run install' \
+  'mise run install-hooks' \
+  'mise run verify')"
+[[ "$quick_start_commands" == "$expected_quick_start_commands" ]] ||
+  fail "generated README Quick Start must end with mise run verify"
+
+printf 'ok -- agent bridge, local ignores, and verify task form the baseline\n'
 
 markdownlint_config="${default_dir}/.markdownlint-cli2.jsonc"
 markdownlint_globs="$(jsonc_array_entries "$markdownlint_config" globs)"

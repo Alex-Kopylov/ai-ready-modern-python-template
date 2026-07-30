@@ -180,6 +180,14 @@ run = "uv run pytest tests/"
 description = "Run the pytest suite with a coverage report"
 run = "uv run pytest tests/ --cov --cov-report=term-missing"
 
+[tasks.verify]
+description = "Build, lint, and run the coverage test suite"
+run = [
+  "uv build",
+  { tasks = ["lint"] },
+  { tasks = ["test-cov"] },
+]
+
 [tasks.format]
 description = "Format and autofix Python and TOML files"
 run = [
