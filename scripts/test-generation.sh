@@ -103,8 +103,6 @@ main_branch_name="$(
 for agent_hook_config in .claude/settings.json .codex/hooks.json; do
   [[ -f "$agent_hook_config" ]] ||
     fail "missing default agent hook config: $agent_hook_config"
-  jaq empty "$agent_hook_config" ||
-    fail "invalid generated JSON: $agent_hook_config"
 done
 for agent_hook_script in scripts/agent-lint-fast.sh scripts/agent-stop-notify.sh; do
   [[ -x "$agent_hook_script" ]] ||
@@ -125,6 +123,10 @@ git commit -m "chore: initial generated project"
 
 mise trust --yes
 mise install
+for agent_hook_config in .claude/settings.json .codex/hooks.json; do
+  mise exec -- jaq empty "$agent_hook_config" ||
+    fail "invalid generated JSON: $agent_hook_config"
+done
 mise_tools="$(mise ls --current --json)"
 if grep -Eq '"python"' <<<"$mise_tools"; then
   fail "mise must not provision Python: $mise_tools"
@@ -199,13 +201,17 @@ grep -Fq 'mise run lint-fast failed' "$agent_hook_failure_output" ||
 claude_stop_hook_stdout="${tmp_dir}/agent-stop-notify-claude.stdout"
 printf '{}\n' |
   scripts/agent-stop-notify.sh claude >"$claude_stop_hook_stdout"
-jaq -e '.terminalSequence == "\u0007"' "$claude_stop_hook_stdout" >/dev/null ||
+mise exec -- jaq -e \
+  '.terminalSequence == "\u0007"' \
+  "$claude_stop_hook_stdout" >/dev/null ||
   fail "Claude stop hook did not return the supported bell terminalSequence"
 
 codex_stop_hook_stdout="${tmp_dir}/agent-stop-notify-codex.stdout"
 printf '{}\n' |
   scripts/agent-stop-notify.sh codex >"$codex_stop_hook_stdout"
-jaq -e 'type == "object" and length == 0' "$codex_stop_hook_stdout" >/dev/null ||
+mise exec -- jaq -e \
+  'type == "object" and length == 0' \
+  "$codex_stop_hook_stdout" >/dev/null ||
   fail "Codex stop hook did not return an empty protocol object"
 
 printf 'ok -- agent hooks run from subdirectories and report valid protocol results\n'

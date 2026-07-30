@@ -334,9 +334,6 @@ for agent_hook_script in \
   [[ -x "$agent_hook_script" ]] ||
     fail "expected executable file: ${agent_hook_script}"
 done
-jaq empty \
-  "${default_dir}/.claude/settings.json" \
-  "${default_dir}/.codex/hooks.json"
 for agent_hook_config in \
   "${default_dir}/.claude/settings.json" \
   "${default_dir}/.codex/hooks.json"; do
