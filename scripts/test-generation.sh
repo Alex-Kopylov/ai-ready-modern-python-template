@@ -100,6 +100,17 @@ main_branch_name="$(
 )"
 [[ -n "$main_branch_name" ]] || fail "missing main_branch_name answer"
 
+for agent_hook_config in .claude/settings.json .codex/hooks.json; do
+  [[ -f "$agent_hook_config" ]] ||
+    fail "missing default agent hook config: $agent_hook_config"
+  jaq empty "$agent_hook_config" ||
+    fail "invalid generated JSON: $agent_hook_config"
+done
+for agent_hook_script in scripts/agent-lint-fast.sh scripts/agent-stop-notify.sh; do
+  [[ -x "$agent_hook_script" ]] ||
+    fail "missing executable default agent hook script: $agent_hook_script"
+done
+
 git_home="${tmp_dir}/git-home"
 mkdir -p "$git_home"
 GIT_CONFIG_NOSYSTEM=1 HOME="$git_home" git init -b "$main_branch_name"
@@ -163,6 +174,42 @@ git diff --quiet || {
 
 mise exec -- uv run python -c "import my_project"
 mise exec -- uv build --out-dir "${tmp_dir}/dist"
+
+mkdir -p nested/agent-hook-probe
+(
+  cd nested/agent-hook-probe
+  ../../scripts/agent-lint-fast.sh
+) || fail "post-edit hook did not run lint-fast from a generated-project subdirectory"
+rm -rf nested
+
+cp src/my_project/main.py "${tmp_dir}/main.py.agent-hook-backup"
+printf 'def broken(:\n' > src/my_project/main.py
+agent_hook_failure_output="${tmp_dir}/agent-hook-failure.txt"
+set +e
+scripts/agent-lint-fast.sh >"${tmp_dir}/agent-hook-failure.stdout" \
+  2>"$agent_hook_failure_output"
+agent_hook_failure_status=$?
+set -e
+cp "${tmp_dir}/main.py.agent-hook-backup" src/my_project/main.py
+[[ "$agent_hook_failure_status" -eq 2 ]] ||
+  fail "post-edit hook returned ${agent_hook_failure_status}, expected 2"
+grep -Fq 'mise run lint-fast failed' "$agent_hook_failure_output" ||
+  fail "post-edit hook did not report lint failure on stderr"
+
+claude_stop_hook_stdout="${tmp_dir}/agent-stop-notify-claude.stdout"
+printf '{}\n' |
+  scripts/agent-stop-notify.sh claude >"$claude_stop_hook_stdout"
+jaq -e '.terminalSequence == "\u0007"' "$claude_stop_hook_stdout" >/dev/null ||
+  fail "Claude stop hook did not return the supported bell terminalSequence"
+
+codex_stop_hook_stdout="${tmp_dir}/agent-stop-notify-codex.stdout"
+printf '{}\n' |
+  scripts/agent-stop-notify.sh codex >"$codex_stop_hook_stdout"
+jaq -e 'type == "object" and length == 0' "$codex_stop_hook_stdout" >/dev/null ||
+  fail "Codex stop hook did not return an empty protocol object"
+
+printf 'ok -- agent hooks run from subdirectories and report valid protocol results\n'
+
 mise run lint
 
 if [[ "$scenario" == github-actions-on ]]; then
@@ -221,7 +268,7 @@ mkdir -p .claude
 printf '#bad heading\n\n\n\nx\n' > .claude/probe.md
 mise run lint-md ||
   fail "markdownlint did not ignore .claude/probe.md"
-rm -rf .claude
+rm .claude/probe.md
 
 agents_backup="${tmp_dir}/AGENTS.md.probe-backup"
 cp AGENTS.md "$agents_backup"
@@ -240,12 +287,14 @@ rm -rf docs/specs
 # Scope the residue check to the probe artefacts. The tree already carries
 # unrelated churn at this point (uv.lock, .venv) from the earlier install steps,
 # so a whole-tree `git status` check would be a false positive.
-for probe in EXTRA.md .claude docs/specs; do
+for probe in EXTRA.md .claude/probe.md docs/specs; do
   [[ ! -e "$probe" ]] ||
     fail "markdownlint probe left ${probe} behind in the generated project"
 done
 git diff --quiet -- AGENTS.md ||
   fail "markdownlint probe did not restore AGENTS.md"
+git diff --quiet -- .claude/settings.json .codex/hooks.json ||
+  fail "markdownlint probe changed the rendered agent hook configs"
 
 mise run test
 mise run test-cov

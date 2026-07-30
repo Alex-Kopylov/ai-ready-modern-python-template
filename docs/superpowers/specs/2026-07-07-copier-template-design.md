@@ -80,6 +80,7 @@ The visible questions are:
 | `extra_linters` | multiselect | all | jscpd, typos, and markdownlint |
 | `parallel_testing` | boolean | `true` | Parallel pytest via pytest-xdist; false uses serial pytest |
 | `use_mutmut` | boolean | `true` | Include mutmut mutation testing as a development dependency |
+| `use_agent_hooks` | boolean | `true` | Include Claude Code and Codex post-edit lint and stop notification hooks |
 | `coverage_fail_under` | integer | `80` | Coverage threshold; zero disables it |
 
 `project_name` is used unchanged for display text, distribution metadata, the
@@ -147,7 +148,8 @@ ecosystem block because the Dockerfile always exists.
 
 ### GitHub automation
 
-`use_github_actions` is the only structural switch. When enabled it renders:
+`use_github_actions` controls the GitHub automation bundle. When enabled it
+renders:
 
 - `.github/workflows/ci.yml`;
 - `.github/dependabot.yml`;
@@ -170,6 +172,14 @@ default. Disabling it omits pytest-xdist and uses pytest's serial default.
 `use_mutmut` includes mutmut in the development dependency group by default.
 Disabling it omits the package.
 
+`use_agent_hooks` renders project-local `.claude/settings.json` and
+`.codex/hooks.json` plus two executable scripts shared by both clients. The
+PostToolUse `Edit|Write` hook resolves the Git root and runs the check-only
+`mise run lint-fast` task, reporting failures without modifying files. The Stop
+hook plays the macOS system sound with `afplay` or falls back to a terminal bell
+and never blocks completion. Disabling the option omits both configs, both
+scripts, and generated operational documentation.
+
 The `extra_linters` multiselect directly controls jscpd, typos, and markdownlint
 tools, tasks, hooks, and configuration files. An empty selection remains valid
 and leaves no dangling task references.
@@ -186,6 +196,7 @@ generated toolchain. It covers:
 - Python 3.10 and an exact patch version;
 - parallel and serial pytest configurations;
 - default and disabled mutmut development dependencies;
+- default and disabled Claude Code and Codex agent hooks;
 - disabled coverage gate;
 - empty optional-linter selection;
 - unchanged project-name propagation;

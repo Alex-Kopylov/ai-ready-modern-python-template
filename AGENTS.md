@@ -51,8 +51,10 @@ Inside a generated project, the standard commands are:
 
 - Every generated project is installable and buildable through Hatchling.
 - Docker, `.dockerignore`, Hadolint configuration, task, and hook are baseline.
-- `use_github_actions` is the only structural switch and controls the complete
-  GitHub workflow, dependency automation, schema, and security bundle.
+- `use_github_actions` controls the complete GitHub workflow, dependency
+  automation, schema, and security bundle.
+- `use_agent_hooks` controls both Claude Code and Codex project-local hook
+  configs, their shared scripts, and generated operational documentation.
 - `project_name` is used unchanged for the distribution and import package.
 - The starter project and Docker command remain framework-neutral.
 

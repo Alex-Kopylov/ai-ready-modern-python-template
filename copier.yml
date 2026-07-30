@@ -130,6 +130,13 @@ use_mutmut:
   help: Include mutmut mutation testing as a development dependency.
   default: true
 
+use_agent_hooks:
+  type: bool
+  help: >-
+    Include project-local Claude Code and Codex hooks for post-edit linting and
+    stop notifications.
+  default: true
+
 coverage_fail_under:
   type: int
   help: Minimum coverage percentage; 0 leaves the coverage gate off.

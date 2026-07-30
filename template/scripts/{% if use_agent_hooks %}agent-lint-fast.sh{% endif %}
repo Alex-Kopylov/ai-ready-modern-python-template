@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  printf 'Agent hook: cannot find the Git project root.\n' >&2
+  exit 2
+}
+
+if ! command -v mise >/dev/null 2>&1; then
+  printf 'Agent hook: mise is unavailable; run mise install first.\n' >&2
+  exit 2
+fi
+
+lint_output="$(
+  cd "${repo_root}" && mise run lint-fast 2>&1
+)"
+lint_status=$?
+if [[ "${lint_status}" -ne 0 ]]; then
+  printf 'Agent hook: mise run lint-fast failed after the edit.\n' >&2
+  printf '%s\n' "${lint_output}" >&2
+  exit 2
+fi

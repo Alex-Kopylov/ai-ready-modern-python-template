@@ -34,6 +34,21 @@ source-build fallback.
 - `mise run test`: run the pytest suite under `tests`.
 - `mise run test-cov`: run the pytest suite with a coverage report.
 - `mise run install-hooks`: install prek-managed pre-commit and pre-push hooks.
+{% if use_agent_hooks %}
+
+## Agent Hooks
+
+Agent hooks are enabled by default for Claude Code and Codex. After an Edit or
+Write, both clients run the check-only `mise run lint-fast` task from the Git
+root and report failures to the agent without changing files. On Stop, they play
+the macOS system sound through `afplay` or fall back to a terminal bell.
+
+Run `mise install` before relying on the post-edit hook. Claude Code and Codex
+require project hooks to be reviewed and trusted; inspect these generated
+definitions when prompted or through each client's `/hooks`. To omit both
+clients' hook configs and their shared scripts in a fresh render, answer No to
+`use_agent_hooks` in the Copier wizard.
+{% endif %}
 
 ## Docker
 
