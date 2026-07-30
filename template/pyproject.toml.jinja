@@ -22,13 +22,13 @@ dev = [
   "flake8-pydantic",
   "flake8-async",
   "vulture",
-  "deptry>=0.25.1",
+  "deptry",
   # Testing
   "pytest",
   {% if parallel_testing %}
   "pytest-xdist",
   {% endif %}
-  "pytest-cov>=7.1.0",
+  "pytest-cov",
   {% if use_mutmut %}
   # Mutation testing
   "mutmut",
