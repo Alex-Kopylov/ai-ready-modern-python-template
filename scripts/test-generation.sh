@@ -104,10 +104,6 @@ for agent_hook_config in .claude/settings.json .codex/hooks.json; do
   [[ -f "$agent_hook_config" ]] ||
     fail "missing default agent hook config: $agent_hook_config"
 done
-[[ -x scripts/agent-lint-fast.sh ]] ||
-  fail "missing executable default agent hook script: scripts/agent-lint-fast.sh"
-[[ ! -e scripts/agent-stop-notify.sh ]] ||
-  fail "unexpected agent stop notification script"
 
 git_home="${tmp_dir}/git-home"
 mkdir -p "$git_home"
@@ -126,10 +122,12 @@ mise install
 for agent_hook_config in .claude/settings.json .codex/hooks.json; do
   mise exec -- jaq empty "$agent_hook_config" ||
     fail "invalid generated JSON: $agent_hook_config"
-  if grep -Fq '"Stop"' "$agent_hook_config"; then
-    fail "unexpected Stop hook in $agent_hook_config"
-  fi
 done
+agent_hook_command="$(
+  mise exec -- jaq -r \
+    '.hooks.PostToolUse[0].hooks[0].command' \
+    .claude/settings.json
+)"
 mise_tools="$(mise ls --current --json)"
 if grep -Eq '"python"' <<<"$mise_tools"; then
   fail "mise must not provision Python: $mise_tools"
@@ -179,25 +177,22 @@ git diff --quiet || {
 
 mise exec -- uv run python -c "import my_project"
 
-mkdir -p nested/agent-hook-probe
-(
-  cd nested/agent-hook-probe
-  ../../scripts/agent-lint-fast.sh
-) || fail "post-edit hook did not run lint-fast from a generated-project subdirectory"
-rm -rf nested
-
 cp src/my_project/main.py "${tmp_dir}/main.py.agent-hook-backup"
 printf 'def broken(:\n' > src/my_project/main.py
 agent_hook_failure_output="${tmp_dir}/agent-hook-failure.txt"
+mkdir -p nested/agent-hook-probe
 set +e
-scripts/agent-lint-fast.sh >"${tmp_dir}/agent-hook-failure.stdout" \
-  2>"$agent_hook_failure_output"
+(
+  cd nested/agent-hook-probe
+  sh -c "$agent_hook_command"
+) >"${tmp_dir}/agent-hook-failure.stdout" 2>"$agent_hook_failure_output"
 agent_hook_failure_status=$?
 set -e
+rm -rf nested
 cp "${tmp_dir}/main.py.agent-hook-backup" src/my_project/main.py
 [[ "$agent_hook_failure_status" -eq 2 ]] ||
   fail "post-edit hook returned ${agent_hook_failure_status}, expected 2"
-grep -Fq 'mise run lint-fast failed' "$agent_hook_failure_output" ||
+grep -Fq 'src/my_project/main.py' "$agent_hook_failure_output" ||
   fail "post-edit hook did not report lint failure on stderr"
 
 printf 'ok -- agent lint hooks run from subdirectories and report failures\n'

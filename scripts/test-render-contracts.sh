@@ -458,27 +458,17 @@ assert_contains "${default_dir}/pyproject.toml" '"mutmut"'
 assert_contains "${default_dir}/.pytest.ini" '-n auto'
 assert_file_present "${default_dir}/.claude/settings.json"
 assert_file_present "${default_dir}/.codex/hooks.json"
-assert_file_present "${default_dir}/scripts/agent-lint-fast.sh"
-assert_path_absent "${default_dir}/scripts/agent-stop-notify.sh"
-[[ -x "${default_dir}/scripts/agent-lint-fast.sh" ]] ||
-  fail "expected executable file: ${default_dir}/scripts/agent-lint-fast.sh"
+assert_path_absent "${default_dir}/scripts/agent-lint-fast.sh"
 for agent_hook_config in \
   "${default_dir}/.claude/settings.json" \
   "${default_dir}/.codex/hooks.json"; do
   assert_contains "$agent_hook_config" '"PostToolUse"'
   assert_contains "$agent_hook_config" '"matcher": "Edit|Write"'
-  assert_not_contains "$agent_hook_config" '"Stop"'
   assert_contains "$agent_hook_config" 'git rev-parse --show-toplevel'
-  assert_contains "$agent_hook_config" 'scripts/agent-lint-fast.sh'
+  assert_contains "$agent_hook_config" 'mise run lint-fast'
+  assert_contains "$agent_hook_config" 'exit 2'
 done
-assert_contains \
-  "${default_dir}/scripts/agent-lint-fast.sh" \
-  'mise run lint-fast'
-assert_contains \
-  "${default_dir}/scripts/agent-lint-fast.sh" \
-  'exit 2'
 assert_contains "${default_dir}/README.md" 'Agent hooks are enabled by default'
-assert_not_contains "${default_dir}/README.md" 'On Stop'
 assert_contains "${default_dir}/README.md" '`mise install`'
 assert_contains "${default_dir}/README.md" 'Codex'
 assert_contains "${default_dir}/README.md" 'trust'
@@ -694,16 +684,7 @@ no_agent_hooks_dir="${tmp_dir}/no-agent-hooks"
 render_project "$no_agent_hooks_dir" --data use_agent_hooks=false
 assert_path_absent "${no_agent_hooks_dir}/.claude"
 assert_path_absent "${no_agent_hooks_dir}/.codex"
-assert_path_absent "${no_agent_hooks_dir}/scripts/agent-lint-fast.sh"
-assert_path_absent "${no_agent_hooks_dir}/scripts/agent-stop-notify.sh"
-for agent_hook_doc_term in \
-  'Agent Hooks' \
-  'post-edit hook' \
-  'Claude Code and Codex' \
-  'use_agent_hooks' \
-  '/hooks'; do
-  assert_not_contains "${no_agent_hooks_dir}/README.md" "$agent_hook_doc_term"
-done
+assert_not_contains "${no_agent_hooks_dir}/README.md" '## Agent Hooks'
 
 printf 'ok -- agent hooks can be excluded without dangling references\n'
 

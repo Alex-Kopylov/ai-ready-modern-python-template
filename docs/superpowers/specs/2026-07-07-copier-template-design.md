@@ -174,11 +174,9 @@ default. Disabling it omits pytest-xdist and uses pytest's serial default.
 Disabling it omits the package.
 
 `use_agent_hooks` renders project-local `.claude/settings.json` and
-`.codex/hooks.json` plus one executable script shared by both clients. The
-PostToolUse `Edit|Write` hook resolves the Git root and runs the check-only
-`mise run lint-fast` task, reporting failures without modifying files.
-Disabling the option omits both configs, the script, and generated operational
-documentation.
+`.codex/hooks.json`. The PostToolUse `Edit|Write` hook resolves the Git root and
+runs the check-only `mise run lint-fast` task. Disabling the option omits both
+configs and generated operational documentation.
 
 The `extra_linters` multiselect directly controls jscpd, typos, and markdownlint
 tools, tasks, hooks, and configuration files. An empty selection remains valid

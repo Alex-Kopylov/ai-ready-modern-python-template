@@ -59,13 +59,6 @@ Fine-grained tuning stays in generated files. Edit `mise.toml`, `pyproject.toml`
 lint configs, hooks, or CI after generation instead of expanding the wizard for
 every possible rule.
 
-Agent hooks are enabled by default. Set `use_agent_hooks=false` in the Copier
-wizard to omit both clients' configs and the shared script. The post-edit hook
-runs the check-only `mise run lint-fast` task, so run `mise install` before
-using it. Claude Code and Codex require project hooks to be reviewed and
-trusted; inspect the generated definitions when prompted or through each
-client's `/hooks`.
-
 ## After Generation
 
 ```bash

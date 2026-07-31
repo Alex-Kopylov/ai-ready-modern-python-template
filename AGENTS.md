@@ -55,7 +55,7 @@ Inside a generated project, the standard commands are:
 - `use_github_actions` controls the complete GitHub workflow, dependency
   automation, schema, and security bundle.
 - `use_agent_hooks` controls both Claude Code and Codex project-local hook
-  configs, their shared scripts, and generated operational documentation.
+  configs and generated operational documentation.
 - `project_name` is used unchanged for the distribution and import package.
 - The starter project and Docker command remain framework-neutral.
 
