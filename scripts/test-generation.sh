@@ -162,8 +162,7 @@ git diff --quiet || {
 }
 
 mise exec -- uv run python -c "import my_project"
-mise exec -- uv build --out-dir "${tmp_dir}/dist"
-mise run lint
+mise run verify
 
 if [[ "$scenario" == github-actions-on ]]; then
   for workflow_extension in yml yaml; do
@@ -248,7 +247,6 @@ git diff --quiet -- AGENTS.md ||
   fail "markdownlint probe did not restore AGENTS.md"
 
 mise run test
-mise run test-cov
 
 mise run install-hooks
 hook_path_dir="${tmp_dir}/hook-path"

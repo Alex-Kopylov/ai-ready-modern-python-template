@@ -1,6 +1,8 @@
 *.bak
 .history/
 .DS_Store
+CLAUDE.local.md
+.claude/settings.local.json
 __pycache__/
 node_modules/
 .venv/
