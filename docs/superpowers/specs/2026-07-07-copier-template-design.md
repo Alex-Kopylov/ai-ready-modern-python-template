@@ -43,6 +43,7 @@ repo root/
     ├── .pre-commit-config.yaml.jinja
     ├── README.md.jinja
     ├── AGENTS.md.jinja
+    ├── CLAUDE.md
     ├── Dockerfile.jinja
     ├── .dockerignore.jinja
     ├── .hadolint.yaml.jinja
@@ -186,6 +187,13 @@ and leaves no dangling task references.
 `coverage_fail_under` accepts integers from 0 through 100. Positive values emit
 the coverage gate; zero omits the active `fail_under` setting.
 
+Every generated project includes a `CLAUDE.md` bridge containing only
+`@AGENTS.md`, while `.gitignore` reserves `CLAUDE.local.md` and
+`.claude/settings.local.json` for local-only configuration without ignoring
+shared `.claude` assets. The `mise run verify` task runs `uv build`, the
+canonical `lint` task, and the coverage test task in that exact order; `lint`
+delegates to the existing full lint gate.
+
 ### Validation scripts and root CI
 
 `scripts/test-render-contracts.sh` performs fast renders without installing the
@@ -215,11 +223,12 @@ Python minor or exact patch:
 Every scenario renders, initializes Git history on the stored main branch and
 asserts its alignment, installs mise CLI tools and the uv-managed Python,
 asserts that mise does not provide Python, checks the requested/rendered/uv and
-virtual-environment versions agree, imports `my_project`, runs `uv build`, and
-passes lint, test, coverage, and installed hooks. Root CI uses an explicit
+virtual-environment versions agree, imports `my_project`, exercises
+`mise run verify` for the ordered build, full-lint, and coverage gates, and
+passes targeted test, lint, and installed-hook probes. Root CI uses an explicit
 six-row include matrix: both default profiles use Python 3.14, the existing
-expert-mode fixture covers Python 3.11.9, and additional rows cover minor inputs
-3.10, 3.12, and 3.13. The three GitHub-actions-on and three
+expert-mode fixture covers Python 3.11.9, and additional rows cover minor
+inputs 3.10, 3.12, and 3.13. The three GitHub-actions-on and three
 GitHub-actions-off rows preserve balanced feature-profile coverage. Local
 verification runs one representative new row; clean GitHub runners execute all
 six full gates.

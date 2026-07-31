@@ -178,7 +178,6 @@ git diff --quiet || {
 }
 
 mise exec -- uv run python -c "import my_project"
-mise exec -- uv build --out-dir "${tmp_dir}/dist"
 
 mkdir -p nested/agent-hook-probe
 (
@@ -203,7 +202,7 @@ grep -Fq 'mise run lint-fast failed' "$agent_hook_failure_output" ||
 
 printf 'ok -- agent lint hooks run from subdirectories and report failures\n'
 
-mise run lint
+mise run verify
 
 if [[ "$scenario" == github-actions-on ]]; then
   for workflow_extension in yml yaml; do
@@ -290,7 +289,6 @@ git diff --quiet -- .claude/settings.json .codex/hooks.json ||
   fail "markdownlint probe changed the rendered agent hook configs"
 
 mise run test
-mise run test-cov
 
 mise run install-hooks
 hook_path_dir="${tmp_dir}/hook-path"

@@ -33,6 +33,7 @@ Inside a generated project, the standard commands are:
   `src` and `tests`, then format TOML files with Taplo.
 - `mise run test`: run the pytest suite under `tests`.
 - `mise run test-cov`: run the pytest suite with a coverage report.
+- `mise run verify`: build, run the full lint gate, and run coverage tests.
 - `mise run install-hooks`: install prek-managed pre-commit and pre-push hooks.
 - `uv build`: build the installable distribution with Hatchling.
 

@@ -76,9 +76,7 @@ git commit -m "chore: initial project from template"
 mise install
 mise run install
 mise run install-hooks
-mise run lint
-mise run test
-uv build
+mise run verify
 ```
 
 Generated projects intentionally start without `uv.lock`. The first
