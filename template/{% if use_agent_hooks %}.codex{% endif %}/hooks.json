@@ -1,5 +1,5 @@
 {
-  "description": "Project-local post-edit lint and stop notification hooks.",
+  "description": "Project-local post-edit lint hooks.",
   "hooks": {
     "PostToolUse": [
       {
@@ -10,18 +10,6 @@
             "command": "\"$(git rev-parse --show-toplevel)/scripts/agent-lint-fast.sh\"",
             "timeout": 600,
             "statusMessage": "Running fast lint checks"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"$(git rev-parse --show-toplevel)/scripts/agent-stop-notify.sh\" codex",
-            "timeout": 5,
-            "statusMessage": "Sending completion notification"
           }
         ]
       }

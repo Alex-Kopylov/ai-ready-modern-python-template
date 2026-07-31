@@ -30,7 +30,7 @@ The wizard keeps project-shape choices small and explicit:
 | `extra_linters` | all | jscpd, typos, and markdownlint |
 | `parallel_testing` | `true` | Run pytest in parallel with pytest-xdist |
 | `use_mutmut` | `true` | Include mutmut mutation testing as a development dependency |
-| `use_agent_hooks` | `true` | Include Claude Code and Codex post-edit lint and stop notification hooks |
+| `use_agent_hooks` | `true` | Include Claude Code and Codex post-edit lint hooks |
 | `coverage_fail_under` | `80` | Coverage threshold; `0` disables the gate |
 
 The same `project_name` is used for display text, distribution metadata, and
@@ -60,10 +60,11 @@ lint configs, hooks, or CI after generation instead of expanding the wizard for
 every possible rule.
 
 Agent hooks are enabled by default. Set `use_agent_hooks=false` in the Copier
-wizard to omit both clients' configs and shared scripts. The post-edit hook runs
-the check-only `mise run lint-fast` task, so run `mise install` before using it.
-Claude Code and Codex require project hooks to be reviewed and trusted; inspect
-the generated definitions when prompted or through each client's `/hooks`.
+wizard to omit both clients' configs and the shared script. The post-edit hook
+runs the check-only `mise run lint-fast` task, so run `mise install` before
+using it. Claude Code and Codex require project hooks to be reviewed and
+trusted; inspect the generated definitions when prompted or through each
+client's `/hooks`.
 
 ## After Generation
 

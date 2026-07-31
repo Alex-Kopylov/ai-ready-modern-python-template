@@ -133,8 +133,7 @@ use_mutmut:
 use_agent_hooks:
   type: bool
   help: >-
-    Include project-local Claude Code and Codex hooks for post-edit linting and
-    stop notifications.
+    Include project-local Claude Code and Codex hooks for post-edit linting.
   default: true
 
 coverage_fail_under:

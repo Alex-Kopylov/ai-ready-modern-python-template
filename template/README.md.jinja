@@ -40,13 +40,12 @@ source-build fallback.
 
 Agent hooks are enabled by default for Claude Code and Codex. After an Edit or
 Write, both clients run the check-only `mise run lint-fast` task from the Git
-root and report failures to the agent without changing files. On Stop, they play
-the macOS system sound through `afplay` or fall back to a terminal bell.
+root and report failures to the agent without changing files.
 
 Run `mise install` before relying on the post-edit hook. Claude Code and Codex
 require project hooks to be reviewed and trusted; inspect these generated
 definitions when prompted or through each client's `/hooks`. To omit both
-clients' hook configs and their shared scripts in a fresh render, answer No to
+clients' hook configs and their shared script in a fresh render, answer No to
 `use_agent_hooks` in the Copier wizard.
 {% endif %}
 

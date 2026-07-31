@@ -327,48 +327,26 @@ assert_contains "${default_dir}/.pytest.ini" '-n auto'
 assert_file_present "${default_dir}/.claude/settings.json"
 assert_file_present "${default_dir}/.codex/hooks.json"
 assert_file_present "${default_dir}/scripts/agent-lint-fast.sh"
-assert_file_present "${default_dir}/scripts/agent-stop-notify.sh"
-for agent_hook_script in \
-  "${default_dir}/scripts/agent-lint-fast.sh" \
-  "${default_dir}/scripts/agent-stop-notify.sh"; do
-  [[ -x "$agent_hook_script" ]] ||
-    fail "expected executable file: ${agent_hook_script}"
-done
+assert_path_absent "${default_dir}/scripts/agent-stop-notify.sh"
+[[ -x "${default_dir}/scripts/agent-lint-fast.sh" ]] ||
+  fail "expected executable file: ${default_dir}/scripts/agent-lint-fast.sh"
 for agent_hook_config in \
   "${default_dir}/.claude/settings.json" \
   "${default_dir}/.codex/hooks.json"; do
   assert_contains "$agent_hook_config" '"PostToolUse"'
   assert_contains "$agent_hook_config" '"matcher": "Edit|Write"'
-  assert_contains "$agent_hook_config" '"Stop"'
+  assert_not_contains "$agent_hook_config" '"Stop"'
   assert_contains "$agent_hook_config" 'git rev-parse --show-toplevel'
   assert_contains "$agent_hook_config" 'scripts/agent-lint-fast.sh'
-  assert_contains "$agent_hook_config" 'scripts/agent-stop-notify.sh'
 done
-assert_contains \
-  "${default_dir}/.claude/settings.json" \
-  'scripts/agent-stop-notify.sh\" claude'
-assert_contains \
-  "${default_dir}/.codex/hooks.json" \
-  'scripts/agent-stop-notify.sh\" codex'
 assert_contains \
   "${default_dir}/scripts/agent-lint-fast.sh" \
   'mise run lint-fast'
 assert_contains \
   "${default_dir}/scripts/agent-lint-fast.sh" \
   'exit 2'
-assert_contains \
-  "${default_dir}/scripts/agent-stop-notify.sh" \
-  '/System/Library/Sounds/'
-assert_contains \
-  "${default_dir}/scripts/agent-stop-notify.sh" \
-  "printf '\\a'"
-assert_contains \
-  "${default_dir}/scripts/agent-stop-notify.sh" \
-  '"terminalSequence":"\\u0007"'
-assert_contains \
-  "${default_dir}/scripts/agent-stop-notify.sh" \
-  "printf '{}\\n'"
 assert_contains "${default_dir}/README.md" 'Agent hooks are enabled by default'
+assert_not_contains "${default_dir}/README.md" 'On Stop'
 assert_contains "${default_dir}/README.md" '`mise install`'
 assert_contains "${default_dir}/README.md" 'Codex'
 assert_contains "${default_dir}/README.md" 'trust'

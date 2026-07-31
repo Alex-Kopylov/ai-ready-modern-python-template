@@ -104,10 +104,10 @@ for agent_hook_config in .claude/settings.json .codex/hooks.json; do
   [[ -f "$agent_hook_config" ]] ||
     fail "missing default agent hook config: $agent_hook_config"
 done
-for agent_hook_script in scripts/agent-lint-fast.sh scripts/agent-stop-notify.sh; do
-  [[ -x "$agent_hook_script" ]] ||
-    fail "missing executable default agent hook script: $agent_hook_script"
-done
+[[ -x scripts/agent-lint-fast.sh ]] ||
+  fail "missing executable default agent hook script: scripts/agent-lint-fast.sh"
+[[ ! -e scripts/agent-stop-notify.sh ]] ||
+  fail "unexpected agent stop notification script"
 
 git_home="${tmp_dir}/git-home"
 mkdir -p "$git_home"
@@ -126,6 +126,9 @@ mise install
 for agent_hook_config in .claude/settings.json .codex/hooks.json; do
   mise exec -- jaq empty "$agent_hook_config" ||
     fail "invalid generated JSON: $agent_hook_config"
+  if grep -Fq '"Stop"' "$agent_hook_config"; then
+    fail "unexpected Stop hook in $agent_hook_config"
+  fi
 done
 mise_tools="$(mise ls --current --json)"
 if grep -Eq '"python"' <<<"$mise_tools"; then
@@ -198,23 +201,7 @@ cp "${tmp_dir}/main.py.agent-hook-backup" src/my_project/main.py
 grep -Fq 'mise run lint-fast failed' "$agent_hook_failure_output" ||
   fail "post-edit hook did not report lint failure on stderr"
 
-claude_stop_hook_stdout="${tmp_dir}/agent-stop-notify-claude.stdout"
-printf '{}\n' |
-  scripts/agent-stop-notify.sh claude >"$claude_stop_hook_stdout"
-mise exec -- jaq -e \
-  '.terminalSequence == "\u0007"' \
-  "$claude_stop_hook_stdout" >/dev/null ||
-  fail "Claude stop hook did not return the supported bell terminalSequence"
-
-codex_stop_hook_stdout="${tmp_dir}/agent-stop-notify-codex.stdout"
-printf '{}\n' |
-  scripts/agent-stop-notify.sh codex >"$codex_stop_hook_stdout"
-mise exec -- jaq -e \
-  'type == "object" and length == 0' \
-  "$codex_stop_hook_stdout" >/dev/null ||
-  fail "Codex stop hook did not return an empty protocol object"
-
-printf 'ok -- agent hooks run from subdirectories and report valid protocol results\n'
+printf 'ok -- agent lint hooks run from subdirectories and report failures\n'
 
 mise run lint
 
