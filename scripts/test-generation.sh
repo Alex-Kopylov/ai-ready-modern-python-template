@@ -100,6 +100,11 @@ main_branch_name="$(
 )"
 [[ -n "$main_branch_name" ]] || fail "missing main_branch_name answer"
 
+for agent_hook_config in .claude/settings.json .codex/hooks.json; do
+  [[ -f "$agent_hook_config" ]] ||
+    fail "missing default agent hook config: $agent_hook_config"
+done
+
 git_home="${tmp_dir}/git-home"
 mkdir -p "$git_home"
 GIT_CONFIG_NOSYSTEM=1 HOME="$git_home" git init -b "$main_branch_name"
@@ -114,6 +119,15 @@ git commit -m "chore: initial generated project"
 
 mise trust --yes
 mise install
+for agent_hook_config in .claude/settings.json .codex/hooks.json; do
+  mise exec -- jaq empty "$agent_hook_config" ||
+    fail "invalid generated JSON: $agent_hook_config"
+done
+agent_hook_command="$(
+  mise exec -- jaq -r \
+    '.hooks.PostToolUse[0].hooks[0].command' \
+    .claude/settings.json
+)"
 mise_tools="$(mise ls --current --json)"
 if grep -Eq '"python"' <<<"$mise_tools"; then
   fail "mise must not provision Python: $mise_tools"
@@ -162,6 +176,27 @@ git diff --quiet || {
 }
 
 mise exec -- uv run python -c "import my_project"
+
+cp src/my_project/main.py "${tmp_dir}/main.py.agent-hook-backup"
+printf 'def broken(:\n' > src/my_project/main.py
+agent_hook_failure_output="${tmp_dir}/agent-hook-failure.txt"
+mkdir -p nested/agent-hook-probe
+set +e
+(
+  cd nested/agent-hook-probe
+  sh -c "$agent_hook_command"
+) >"${tmp_dir}/agent-hook-failure.stdout" 2>"$agent_hook_failure_output"
+agent_hook_failure_status=$?
+set -e
+rm -rf nested
+cp "${tmp_dir}/main.py.agent-hook-backup" src/my_project/main.py
+[[ "$agent_hook_failure_status" -eq 2 ]] ||
+  fail "post-edit hook returned ${agent_hook_failure_status}, expected 2"
+grep -Fq 'src/my_project/main.py' "$agent_hook_failure_output" ||
+  fail "post-edit hook did not report lint failure on stderr"
+
+printf 'ok -- agent lint hooks run from subdirectories and report failures\n'
+
 mise run verify
 
 if [[ "$scenario" == github-actions-on ]]; then
@@ -220,7 +255,7 @@ mkdir -p .claude
 printf '#bad heading\n\n\n\nx\n' > .claude/probe.md
 mise run lint-md ||
   fail "markdownlint did not ignore .claude/probe.md"
-rm -rf .claude
+rm .claude/probe.md
 
 agents_backup="${tmp_dir}/AGENTS.md.probe-backup"
 cp AGENTS.md "$agents_backup"
@@ -239,12 +274,14 @@ rm -rf docs/specs
 # Scope the residue check to the probe artefacts. The tree already carries
 # unrelated churn at this point (uv.lock, .venv) from the earlier install steps,
 # so a whole-tree `git status` check would be a false positive.
-for probe in EXTRA.md .claude docs/specs; do
+for probe in EXTRA.md .claude/probe.md docs/specs; do
   [[ ! -e "$probe" ]] ||
     fail "markdownlint probe left ${probe} behind in the generated project"
 done
 git diff --quiet -- AGENTS.md ||
   fail "markdownlint probe did not restore AGENTS.md"
+git diff --quiet -- .claude/settings.json .codex/hooks.json ||
+  fail "markdownlint probe changed the rendered agent hook configs"
 
 mise run test
 

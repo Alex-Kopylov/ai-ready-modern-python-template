@@ -30,6 +30,7 @@ The wizard keeps project-shape choices small and explicit:
 | `extra_linters` | all | jscpd, typos, and markdownlint |
 | `parallel_testing` | `true` | Run pytest in parallel with pytest-xdist |
 | `use_mutmut` | `true` | Include mutmut mutation testing as a development dependency |
+| `use_agent_hooks` | `true` | Include Claude Code and Codex post-edit lint hooks |
 | `coverage_fail_under` | `80` | Coverage threshold; `0` disables the gate |
 
 The same `project_name` is used for display text, distribution metadata, and

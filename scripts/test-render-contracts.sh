@@ -313,6 +313,7 @@ expected_question_map="$(printf '%s\n' \
   visible:extra_linters \
   visible:parallel_testing \
   visible:use_mutmut \
+  visible:use_agent_hooks \
   visible:coverage_fail_under \
   hidden:python_version_minor \
   hidden:python_version_pin)"
@@ -455,6 +456,22 @@ assert_contains "${default_dir}/LICENSE" 'Copyright (c) 2026 my_project'
 assert_contains "${default_dir}/pyproject.toml" '"pytest-xdist"'
 assert_contains "${default_dir}/pyproject.toml" '"mutmut"'
 assert_contains "${default_dir}/.pytest.ini" '-n auto'
+assert_file_present "${default_dir}/.claude/settings.json"
+assert_file_present "${default_dir}/.codex/hooks.json"
+assert_path_absent "${default_dir}/scripts/agent-lint-fast.sh"
+for agent_hook_config in \
+  "${default_dir}/.claude/settings.json" \
+  "${default_dir}/.codex/hooks.json"; do
+  assert_contains "$agent_hook_config" '"PostToolUse"'
+  assert_contains "$agent_hook_config" '"matcher": "Edit|Write"'
+  assert_contains "$agent_hook_config" 'git rev-parse --show-toplevel'
+  assert_contains "$agent_hook_config" 'mise run lint-fast'
+  assert_contains "$agent_hook_config" 'exit 2'
+done
+assert_contains "${default_dir}/README.md" 'Agent hooks are enabled by default'
+assert_contains "${default_dir}/README.md" '`mise install`'
+assert_contains "${default_dir}/README.md" 'Codex'
+assert_contains "${default_dir}/README.md" 'trust'
 assert_not_contains "${default_dir}/Dockerfile" 'LABEL maintainer='
 assert_not_contains "${default_dir}/pyproject.toml" "fastapi"
 assert_not_contains "${default_dir}/pyproject.toml" "uvicorn"
@@ -662,6 +679,14 @@ render_project "$no_mutmut_dir" --data use_mutmut=false
 assert_not_contains "${no_mutmut_dir}/pyproject.toml" '"mutmut"'
 
 printf 'ok -- mutmut can be excluded from development dependencies\n'
+
+no_agent_hooks_dir="${tmp_dir}/no-agent-hooks"
+render_project "$no_agent_hooks_dir" --data use_agent_hooks=false
+assert_path_absent "${no_agent_hooks_dir}/.claude"
+assert_path_absent "${no_agent_hooks_dir}/.codex"
+assert_not_contains "${no_agent_hooks_dir}/README.md" '## Agent Hooks'
+
+printf 'ok -- agent hooks can be excluded without dangling references\n'
 
 no_linters_dir="${tmp_dir}/no-optional-linters"
 render_project "$no_linters_dir" --data 'extra_linters=[]'
