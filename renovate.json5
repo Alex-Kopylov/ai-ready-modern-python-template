@@ -1,0 +1,30 @@
+{
+  // Renovate dependency-update automation for the template repository itself.
+  // Activate by installing the Mend Renovate GitHub App on this repo:
+  // https://github.com/apps/renovate
+  //
+  // Covers: mise.toml tool pins (aqua/pipx backends) and GitHub Actions.
+  // Generated projects get their own copy from template/renovate.json5.
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:best-practices',
+  ],
+  // template/ holds Jinja sources for generated projects, not this
+  // repository's own dependencies. Its manifests are rendered, not installed,
+  // and template/mise.toml is not parseable TOML before rendering.
+  ignorePaths: [
+    'template/**',
+  ],
+  packageRules: [
+    {
+      // The root uv pin mirrors the version template/mise.toml ships, so the
+      // template is developed against the uv it hands to generated projects.
+      // Renovate only manages the root file, so bumping uv here would quietly
+      // pull the two apart; move both by hand in one commit instead.
+      // test-render-contracts.sh warns when they drift.
+      matchManagers: ['mise'],
+      matchDepNames: ['aqua:astral-sh/uv'],
+      enabled: false,
+    },
+  ],
+}

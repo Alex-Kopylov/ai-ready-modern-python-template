@@ -74,7 +74,7 @@ assert_match_count() {
 printf 'Generating scenario: %s\n' "$scenario"
 # --vcs-ref=HEAD selects the current local revision instead of Copier's
 # default latest-tag resolution; Copier also snapshots dirty local changes.
-uvx copier copy \
+mise exec -- copier copy \
   --defaults \
   --vcs-ref=HEAD \
   "${copier_args[@]}" \
