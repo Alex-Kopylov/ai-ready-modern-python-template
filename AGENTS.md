@@ -10,6 +10,19 @@ Keep this repository focused on the reusable template. Do not adopt the
 template into downstream projects from this worktree unless that is explicitly
 requested as a separate task.
 
+## Repository Layers
+
+This repository contains two distinct layers:
+
+- `template/` defines a reusable project starter. Its libraries, linters,
+  and configuration are intended for generated projects. Missing usage in
+  the minimal starter code is not, by itself, a YAGNI issue or evidence of
+  an unused dependency. Evaluate these against the documented starter scope.
+- Root-level files support development, testing, and maintenance of the
+  template itself. They serve this repository rather than generated projects.
+
+When reviewing, interpret each file in the context of the layer it belongs to.
+
 ## Commands
 
 - `scripts/test-render-contracts.sh`: run fast render-only wizard and output
