@@ -64,10 +64,6 @@ Inside a generated project, the standard commands are:
   `pyproject.toml`, `uv.lock`, `src/`, or Python tests. The root `mise.toml` is
   not one of those: it pins the tools that develop and test the template
   itself and never reaches generated projects.
-- Root tool versions are hard-pinned in the root `mise.toml` and bumped by
-  Renovate through `renovate.json5`. Never call an unpinned `uvx <tool>` from
-  CI or `scripts/`; a copier release once broke rendering with no commit in
-  this repository.
 
 ## Template Invariants
 
