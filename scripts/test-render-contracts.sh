@@ -95,7 +95,7 @@ render_project() {
   local destination="$1"
   shift
 
-  if ! uvx copier copy \
+  if ! mise exec -- copier copy \
     --quiet \
     --defaults \
     --vcs-ref=HEAD \
@@ -120,7 +120,7 @@ assert_render_rejected() {
   local destination="$1"
   shift
 
-  if uvx copier copy \
+  if mise exec -- copier copy \
     --quiet \
     --defaults \
     --vcs-ref=HEAD \
@@ -135,8 +135,30 @@ obsolete_questions='setup''_mode|use''_docker|is''_package'
 assert_not_matches "${repo_root}/copier.yml" "^(${obsolete_questions}):"
 assert_not_contains "${repo_root}/copier.yml" "setup""_mode == 'custom'"
 assert_not_matches "${repo_root}/copier.yml" '^_tasks:'
-assert_contains "${repo_root}/copier.yml" '!!python/name:keyword.iskeyword'
-assert_not_contains "${repo_root}/copier.yml" "['False', 'None', 'True'"
+# copier 9.18 loads copier.yml with yaml.SafeLoader and renders through a
+# sandboxed Jinja environment, so the validator cannot reach keyword.iskeyword
+# and the keyword list must be spelled out. Keep the static copy honest by
+# diffing it against the interpreter's own keyword.kwlist.
+assert_not_contains "${repo_root}/copier.yml" '!!python/'
+mise exec -- uv run --no-project python - "${repo_root}/copier.yml" <<'PY' || fail 'copier.yml keyword list drifted from keyword.kwlist'
+import ast
+import keyword
+import re
+import sys
+
+text = open(sys.argv[1], encoding="utf-8").read()
+match = re.search(r"\{% if project_name in\s*(\[.*?\])\s*%\}", text, re.S)
+if match is None:
+    sys.exit("no `project_name in [...]` keyword clause found in copier.yml")
+
+listed = sorted(ast.literal_eval(match.group(1)))
+expected = sorted(keyword.kwlist)
+if listed != expected:
+    missing = sorted(set(expected) - set(listed))
+    extra = sorted(set(listed) - set(expected))
+    sys.exit(f"missing={missing} extra={extra}")
+PY
+printf 'ok -- copier.yml keyword list matches keyword.kwlist\n'
 assert_contains "${repo_root}/copier.yml" '    mise run verify'
 assert_not_matches "${repo_root}/copier.yml" '^    mise run lint$'
 assert_contains "${repo_root}/AGENTS.md" \
@@ -302,7 +324,6 @@ question_map="$({
   ' "${repo_root}/copier.yml"
 })"
 expected_question_map="$(printf '%s\n' \
-  hidden:python_is_keyword \
   visible:project_name \
   visible:project_description \
   visible:main_branch_name \

@@ -25,6 +25,8 @@ When reviewing, interpret each file in the context of the layer it belongs to.
 
 ## Commands
 
+- `mise install`: install the root tool pins (copier, yamllint, actionlint,
+  zizmor, uv) that the scripts below run through `mise exec`.
 - `scripts/test-render-contracts.sh`: run fast render-only wizard and output
   contracts.
 - `scripts/test-generation.sh github-actions-on`: generate and gate the true
@@ -58,8 +60,14 @@ Inside a generated project, the standard commands are:
   source of truth.
 - Project task orchestration and native CLI tooling in generated projects go
   through `mise.toml`.
-- The root repository intentionally does not keep generated-project
-  `pyproject.toml`, `mise.toml`, `uv.lock`, `src/`, or Python tests.
+- The root repository intentionally does not keep a generated project's
+  `pyproject.toml`, `uv.lock`, `src/`, or Python tests. The root `mise.toml` is
+  not one of those: it pins the tools that develop and test the template
+  itself and never reaches generated projects.
+- Root tool versions are hard-pinned in the root `mise.toml` and bumped by
+  Renovate through `renovate.json5`. Never call an unpinned `uvx <tool>` from
+  CI or `scripts/`; a copier release once broke rendering with no commit in
+  this repository.
 
 ## Template Invariants
 

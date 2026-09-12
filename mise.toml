@@ -1,0 +1,17 @@
+# Tool pins for developing the template itself. Generated projects get their
+# own pins from template/mise.toml; nothing here reaches them.
+#
+# Every version is hard-pinned: "latest" made CI depend on whatever the day's
+# release happened to be, which is how copier 9.18 broke rendering without a
+# single commit touching this repository. Renovate proposes the bumps, so the
+# pins stay current without anyone watching releases -- see renovate.json5.
+[tools]
+# aqua backend: mise's core uv plugin extracts current uv tarballs incorrectly
+# (binary stays under uv-<target>/ with no bin/), silently falling back to any
+# system uv. Kept in step with template/mise.toml so the template is developed
+# against the uv it ships.
+"aqua:astral-sh/uv" = "0.11.27"
+"aqua:rhysd/actionlint" = "1.7.11"
+"aqua:zizmorcore/zizmor" = "1.25.2"
+"pipx:copier" = "9.18.2"
+"pipx:yamllint" = "1.38.0"
