@@ -760,7 +760,7 @@ done
 
 printf 'ok -- invalid project-name shapes and a hard keyword are rejected\n'
 
-valid_project_name_boundaries=(A a1 a_b a__b match)
+valid_project_name_boundaries=(A a1 a_b a__b match type)
 for valid_project_name in "${valid_project_name_boundaries[@]}"; do
   valid_name_dir="${tmp_dir}/valid-project-name-${valid_project_name}"
   render_project "$valid_name_dir" --data "project_name=${valid_project_name}"
@@ -770,7 +770,7 @@ for valid_project_name in "${valid_project_name_boundaries[@]}"; do
     "name = \"${valid_project_name}\""
 done
 
-printf 'ok -- project-name boundaries and a soft keyword remain valid\n'
+printf 'ok -- project-name boundaries and soft keywords remain valid\n'
 
 if rg -n --hidden --glob '!.git' "$obsolete_questions" "$repo_root"; then
   fail "obsolete wizard concepts remain in the repository"
