@@ -15,4 +15,16 @@
   ignorePaths: [
     'template/**',
   ],
+  packageRules: [
+    {
+      // The root uv pin mirrors the version template/mise.toml ships, so the
+      // template is developed against the uv it hands to generated projects.
+      // Renovate only manages the root file, so bumping uv here would quietly
+      // pull the two apart; move both by hand in one commit instead.
+      // test-render-contracts.sh warns when they drift.
+      matchManagers: ['mise'],
+      matchDepNames: ['aqua:astral-sh/uv'],
+      enabled: false,
+    },
+  ],
 }

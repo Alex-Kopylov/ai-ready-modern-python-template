@@ -15,6 +15,10 @@ fail() {
   exit 1
 }
 
+warn() {
+  printf 'Render contract warning: %s\n' "$1" >&2
+}
+
 assert_file_present() {
   [[ -f "$1" ]] || fail "expected file: $1"
 }
@@ -159,6 +163,25 @@ if listed != expected:
     sys.exit(f"missing={missing} extra={extra}")
 PY
 printf 'ok -- copier.yml keyword list matches keyword.kwlist\n'
+
+# Renovate bumps the root uv pin only (template/** is ignored), and the two
+# files are meant to stay on one version. Drift is a nudge to realign, not a
+# reason to block the build, so this warns instead of failing.
+read_uv_pin() {
+  sed -n 's|^"aqua:astral-sh/uv" = "\(.*\)"$|\1|p' "$1"
+}
+
+assert_file_present "${repo_root}/mise.toml"
+assert_file_present "${repo_root}/template/mise.toml.jinja"
+root_uv_pin="$(read_uv_pin "${repo_root}/mise.toml")"
+template_uv_pin="$(read_uv_pin "${repo_root}/template/mise.toml.jinja")"
+if [[ -z "$root_uv_pin" || -z "$template_uv_pin" ]]; then
+  fail 'no "aqua:astral-sh/uv" pin in mise.toml or template/mise.toml.jinja'
+elif [[ "$root_uv_pin" != "$template_uv_pin" ]]; then
+  warn "uv pins drifted: root mise.toml has ${root_uv_pin}, template/mise.toml.jinja has ${template_uv_pin}"
+else
+  printf 'ok -- root and template uv pins agree on %s\n' "$root_uv_pin"
+fi
 assert_contains "${repo_root}/copier.yml" '    mise run verify'
 assert_not_matches "${repo_root}/copier.yml" '^    mise run lint$'
 assert_contains "${repo_root}/AGENTS.md" \
