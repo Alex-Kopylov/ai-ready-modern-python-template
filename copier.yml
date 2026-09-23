@@ -117,10 +117,12 @@ extra_linters:
     jscpd: jscpd
     typos: typos
     markdownlint: markdownlint
+    commentwall: commentwall
   default:
     - jscpd
     - typos
     - markdownlint
+    - commentwall
 
 parallel_testing:
   type: bool

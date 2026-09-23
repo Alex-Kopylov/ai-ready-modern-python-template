@@ -717,13 +717,16 @@ for optional_term in \
   'npm:jscpd' \
   'npm:markdownlint-cli2' \
   'aqua:crate-ci/typos' \
+  'github:Alex-Kopylov/commentwall' \
   '[tasks.lint-md]' \
   '[tasks.lint-duplicates]' \
-  '[tasks.lint-typos]'; do
+  '[tasks.lint-typos]' \
+  '[tasks.lint-comments]'; do
   assert_not_contains "${no_linters_dir}/mise.toml" "$optional_term"
 done
 assert_not_contains "${no_linters_dir}/.pre-commit-config.yaml" '      - id: jscpd'
 assert_not_contains "${no_linters_dir}/.pre-commit-config.yaml" '      - id: typos'
+assert_not_contains "${no_linters_dir}/.pre-commit-config.yaml" '      - id: commentwall'
 
 printf 'ok -- optional linter selection can be empty\n'
 

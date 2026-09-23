@@ -31,6 +31,7 @@ jobs:
       - run: mise exec -- yamllint -c template/.yamllint copier.yml .github/workflows/ci.yml
       - run: mise exec -- actionlint .github/workflows/ci.yml
       - run: mise exec -- zizmor .github/workflows/ci.yml
+      - run: git ls-files -z '*.py' | xargs -0 mise exec -- commentwall
 
   render-contracts:
     runs-on: ubuntu-latest

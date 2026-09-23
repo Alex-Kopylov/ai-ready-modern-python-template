@@ -3,7 +3,7 @@
   // Activate by installing the Mend Renovate GitHub App on this repo:
   // https://github.com/apps/renovate
   //
-  // Covers: mise.toml tool pins (aqua/pipx backends) and GitHub Actions.
+  // Covers: mise.toml tool pins (aqua/github/pipx backends) and GitHub Actions.
   // Generated projects get their own copy from template/renovate.json5.
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
