@@ -78,7 +78,7 @@ The visible questions are:
 | `license` | choice | `MIT` | MIT, Proprietary, or Skip |
 | `author_name` | string | empty | License owner and optional Docker maintainer |
 | `use_github_actions` | boolean | `true` | Complete GitHub automation bundle |
-| `extra_linters` | multiselect | all | jscpd, typos, and markdownlint |
+| `extra_linters` | multiselect | all | jscpd, typos, markdownlint, and commentwall |
 | `parallel_testing` | boolean | `true` | Parallel pytest via pytest-xdist; false uses serial pytest |
 | `use_mutmut` | boolean | `true` | Include mutmut mutation testing as a development dependency |
 | `coverage_fail_under` | integer | `80` | Coverage threshold; zero disables it |
@@ -171,8 +171,8 @@ default. Disabling it omits pytest-xdist and uses pytest's serial default.
 `use_mutmut` includes mutmut in the development dependency group by default.
 Disabling it omits the package.
 
-The `extra_linters` multiselect directly controls jscpd, typos, and markdownlint
-tools, tasks, hooks, and configuration files. An empty selection remains valid
+The `extra_linters` multiselect directly controls jscpd, typos, markdownlint, and
+commentwall tools, tasks, hooks, and configuration files. An empty selection remains valid
 and leaves no dangling task references.
 
 `coverage_fail_under` accepts integers from 0 through 100. Positive values emit

@@ -167,6 +167,14 @@ repos:
         stages: [pre-commit]
 
 {% endif %}
+{% if "commentwall" in extra_linters %}
+      - id: commentwall
+        name: commentwall (comment walls)
+        entry: mise exec -- commentwall
+        language: system
+        types: [python]
+
+{% endif %}
 # === INTENTIONAL EXCLUSIONS ===
 # The following tools are useful in editor, agent, or CI workflows but NOT in hook runs:
 # - markdownlint-cli2: pass_filenames=false causes it to scan gitignored docs/plans/

@@ -27,7 +27,7 @@ The wizard keeps project-shape choices small and explicit:
 | `license` | `MIT` | MIT, Proprietary, or Skip |
 | `author_name` | empty | License owner and optional Docker maintainer |
 | `use_github_actions` | `true` | Entire GitHub automation bundle |
-| `extra_linters` | all | jscpd, typos, and markdownlint |
+| `extra_linters` | all | jscpd, typos, markdownlint, and commentwall |
 | `parallel_testing` | `true` | Run pytest in parallel with pytest-xdist |
 | `use_mutmut` | `true` | Include mutmut mutation testing as a development dependency |
 | `coverage_fail_under` | `80` | Coverage threshold; `0` disables the gate |

@@ -30,6 +30,9 @@ node = "22.22.0"
 {% endif -%}
 {% if "typos" in extra_linters -%}
 "aqua:crate-ci/typos" = "1.20.7"
+{% endif -%}
+{% if "commentwall" in extra_linters -%}
+"github:Alex-Kopylov/commentwall" = "0.2.0"
 {% endif %}
 
 # Python tools managed via uv (installed in venv)
@@ -66,6 +69,9 @@ run = [
     {% endif %}
     {% if "typos" in extra_linters %}
     "lint-typos",
+    {% endif %}
+    {% if "commentwall" in extra_linters %}
+    "lint-comments",
     {% endif %}
   ] },
 ]
@@ -170,6 +176,12 @@ run = "uv audit"
 [tasks.lint-typos]
 description = "Scan for spelling mistakes"
 run = "mise exec -- typos"
+
+{% endif -%}
+{% if "commentwall" in extra_linters -%}
+[tasks.lint-comments]
+description = "Reject walls of standalone comments in Python files"
+run = "find src tests -name '*.py' -exec mise exec -- commentwall {} +"
 
 {% endif -%}
 [tasks.test]
