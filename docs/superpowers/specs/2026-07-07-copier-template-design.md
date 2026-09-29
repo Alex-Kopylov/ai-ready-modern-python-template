@@ -96,14 +96,14 @@ keywords that satisfy the unified distribution-name shape.
 side-effect-free: there are no Copier tasks that initialize or rename Git, so
 `copier update` never reconfigures an existing repository.
 
-Hidden `python_version_minor` supplies metadata, Ruff, and ty. Hidden
-`python_version_pin` preserves exact patch answers and maps supported minor
-answers to fresh managed patches verified with the template-pinned uv release.
-Exact patches are expert mode and pass through unchanged; unavailable builds
-require choosing another patch or minor, with no hidden system or source-build
-fallback. uv is the sole Python provisioner and uses `.python-version` with
-`python-preference = "only-managed"`; mise remains the task runner and installer
-for language-independent CLI tools.
+Hidden `python_version_minor` supplies `requires-python`, which Ruff and ty
+read as their target version. Hidden `python_version_pin` preserves exact patch
+answers and maps supported minor answers to fresh managed patches verified with
+the template-pinned uv release. Exact patches are expert mode and pass through
+unchanged; unavailable builds require choosing another patch or minor, with no
+hidden system or source-build fallback. uv is the sole Python provisioner and
+uses `.python-version` with `python-preference = "only-managed"`; mise remains
+the task runner and installer for language-independent CLI tools.
 
 ### Packaging
 
