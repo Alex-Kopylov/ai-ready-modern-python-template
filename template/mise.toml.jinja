@@ -7,29 +7,29 @@
 # aqua backend: mise's core uv plugin extracts current uv tarballs incorrectly
 # (binary stays under uv-<target>/ with no bin/), silently falling back to
 # any system uv.
-"aqua:astral-sh/uv" = "0.11.27"
+"aqua:astral-sh/uv" = "0.12.19"
 {% if "jscpd" in extra_linters or "markdownlint" in extra_linters -%}
-node = "22.22.0"
+node = "26.10.0"
 {% endif -%}
 {% if "jscpd" in extra_linters -%}
-"npm:jscpd" = "4.2.4"
+"npm:jscpd" = "5.3.3"
 {% endif -%}
 {% if "markdownlint" in extra_linters -%}
-"npm:markdownlint-cli2" = "0.22.1"
+"npm:markdownlint-cli2" = "0.23.3"
 {% endif -%}
-"aqua:01mf02/jaq" = "2.3.0"
+"aqua:01mf02/jaq" = "3.1.1"
 "aqua:gitleaks/gitleaks" = "8.30.1"
-"aqua:hadolint/hadolint" = "2.14.0"
+"aqua:hadolint/hadolint" = "2.15.1"
 "aqua:koalaman/shellcheck" = "0.11.0"
 {% if use_github_actions -%}
-"aqua:rhysd/actionlint" = "1.7.11"
+"aqua:rhysd/actionlint" = "1.7.12"
 {% endif -%}
 "aqua:tamasfe/taplo" = "0.10.0"
 {% if use_github_actions -%}
-"aqua:zizmorcore/zizmor" = "1.25.2"
+"aqua:zizmorcore/zizmor" = "1.30.1"
 {% endif -%}
 {% if "typos" in extra_linters -%}
-"aqua:crate-ci/typos" = "1.20.7"
+"aqua:crate-ci/typos" = "1.50.3"
 {% endif -%}
 {% if "commentwall" in extra_linters -%}
 "github:Alex-Kopylov/commentwall" = "0.2.0"
