@@ -12,7 +12,9 @@ trap 'rm -rf "$tmp_dir"' EXIT
 project_dir="${tmp_dir}/project"
 
 mise exec -- copier copy --quiet --defaults --vcs-ref=HEAD "$repo_root" "$project_dir"
-(cd "$project_dir" && mise trust --quiet && mise upgrade --bump --local)
+# Install the current pins first: npm tools resolve their node dependency from
+# the installed toolset, so a fresh runner fails when node bumps too.
+(cd "$project_dir" && mise trust --quiet && mise install && mise upgrade --bump --local)
 
 while IFS= read -r pin; do
   tool="${pin%% = *}"
