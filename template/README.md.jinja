@@ -51,10 +51,12 @@ uv-managed `.python-version` interpreter as local development and CI.
 GitHub Actions runs `mise run lint` and `mise run test-cov`. Commit `uv.lock`
 after the first local sync before relying on CI.
 
-Dependabot updates Python dependencies, the Docker base image, and GitHub
-Actions. The weekly `mise-upgrade` workflow opens a PR bumping the tool pins
-in `mise.toml` and dispatches CI on it. It needs **Settings → Actions →
-General → Allow GitHub Actions to create and approve pull requests** enabled:
+Dependabot updates Python dependencies, Docker base images, and GitHub Actions.
+The weekly `mise-upgrade` workflow opens a PR bumping the tool pins in
+`mise.toml`, moves the Dockerfile's uv image to the new uv pin
+(`mise run sync-docker-uv`), and dispatches CI on it. It needs **Settings →
+Actions → General → Allow GitHub Actions to create and approve pull requests**
+enabled:
 
 ```bash
 gh api -X PUT "repos/{owner}/{repo}/actions/permissions/workflow" \

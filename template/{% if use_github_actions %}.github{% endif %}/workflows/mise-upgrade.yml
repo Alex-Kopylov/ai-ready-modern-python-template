@@ -26,6 +26,7 @@ jobs:
         with:
           github_token: ${{ github.token }}
       - run: mise upgrade --bump --local
+      - run: mise run sync-docker-uv
       - id: pr
         uses: peter-evans/create-pull-request@v8.1.1
         with:

@@ -109,6 +109,22 @@ run = [
   "uv run vulture --config .vulture.toml",
 ]
 
+[tasks.sync-docker-uv]
+description = "Point the Dockerfile's uv image at the uv pinned in mise.toml"
+run = '''
+set -e
+uv_pin="$(sed -n 's|^"aqua:astral-sh/uv" = "\(.*\)"$|\1|p' mise.toml)"
+tag="${uv_pin}-trixie-slim"
+token="$(curl -fsS 'https://ghcr.io/token?scope=repository:astral-sh/uv:pull' |
+  sed -n 's/.*"token":"\([^"]*\)".*/\1/p')"
+curl -fsS -o /dev/null -H "Authorization: Bearer ${token}" \
+  -H 'Accept: application/vnd.oci.image.index.v1+json' \
+  "https://ghcr.io/v2/astral-sh/uv/manifests/${tag}" ||
+  { echo "ghcr.io/astral-sh/uv:${tag} is not published" >&2; exit 1; }
+sed -i.bak "s|^FROM ghcr.io/astral-sh/uv:.*|FROM ghcr.io/astral-sh/uv:${tag}|" Dockerfile
+rm Dockerfile.bak
+'''
+
 [tasks.lint-dockerfile]
 description = "Lint Dockerfiles with Hadolint"
 run = "mise exec -- hadolint Dockerfile"

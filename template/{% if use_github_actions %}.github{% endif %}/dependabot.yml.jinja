@@ -10,6 +10,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      # The uv image follows the uv pin in mise.toml: the mise-upgrade
+      # workflow bumps both in one PR (mise run sync-docker-uv).
+      - dependency-name: "astral-sh/uv"
 
   - package-ecosystem: "github-actions"
     directory: "/"

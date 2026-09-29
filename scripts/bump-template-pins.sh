@@ -14,12 +14,16 @@ project_dir="${tmp_dir}/project"
 mise exec -- copier copy --quiet --defaults --vcs-ref=HEAD "$repo_root" "$project_dir"
 # Install the current pins first: npm tools resolve their node dependency from
 # the installed toolset, so a fresh runner fails when node bumps too.
-(cd "$project_dir" && mise trust --quiet && mise install && mise upgrade --bump --local)
+(cd "$project_dir" && mise trust --quiet && mise install && mise upgrade --bump --local &&
+  mise run sync-docker-uv)
 
 while IFS= read -r pin; do
   tool="${pin%% = *}"
   sed -i "s|^${tool} = \".*\"\$|${pin}|" "$template_mise"
 done < <(sed -n '/^\[tools\]/,/^\[/{/^[^#[].* = "/p}' "${project_dir}/mise.toml")
 
-# copier.yml's Python patch table follows the new uv pin.
+# The Dockerfile's uv image and copier.yml's Python patch table follow the
+# new uv pin.
+from_line="$(grep '^FROM ghcr.io/astral-sh/uv:' "${project_dir}/Dockerfile")"
+sed -i "s|^FROM ghcr.io/astral-sh/uv:.*|${from_line}|" "${repo_root}/template/Dockerfile.jinja"
 "${repo_root}/scripts/sync-python-pins.sh" >/dev/null
