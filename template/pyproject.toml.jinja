@@ -6,10 +6,10 @@ name = "{{ project_name }}"
 version = "0.1.0"
 description = {{ project_description | tojson }}
 requires-python = ">={{ python_version_minor }}"
-{% if license == 'MIT' -%}
-license = "{{ license }}"
-{% elif license == 'Proprietary' -%}
+{% if license == 'UNLICENSED' -%}
 license = "LicenseRef-Proprietary"
+{% elif license != 'Skip' -%}
+license = "{{ license }}"
 {% endif -%}
 dependencies = []
 

@@ -75,7 +75,7 @@ The visible questions are:
 | `project_description` | string | `Project description` | README and metadata |
 | `main_branch_name` | string | `main` | Git setup guidance and CI push branch |
 | `python_version` | string | `3.14` | Python, uv, Ruff, ty, and Docker |
-| `license` | choice | `MIT` | MIT, Proprietary, or Skip |
+| `license` | choice | `MIT` | MIT (default), UNLICENSED, 27 other popular SPDX licenses, or Skip |
 | `author_name` | string | empty | License owner and optional Docker maintainer |
 | `use_github_actions` | boolean | `true` | Complete GitHub automation bundle |
 | `extra_linters` | multiselect | all | jscpd, typos, markdownlint, and commentwall |
@@ -123,7 +123,10 @@ License behavior remains:
 
 - MIT creates `LICENSE` and `project.license = "MIT"`; the holder is
   `author_name` or falls back to `project_name`.
-- Proprietary creates no file and uses `LicenseRef-Proprietary` metadata.
+- Every other SPDX choice creates `LICENSE` from `template/_licenses/<id>.txt`
+  and sets `project.license` to that id. Choices are ordered by GitHub
+  popularity after MIT and UNLICENSED.
+- UNLICENSED creates no file and uses `LicenseRef-Proprietary` metadata.
 - Skip creates no file and emits no project license metadata.
 
 ### Docker baseline
