@@ -192,8 +192,10 @@ python_version_minor:
 
 python_version_pin:
   type: str
-  # Exact patches pass through verbatim. Supported minors map to fresh managed
-  # builds verified with pinned uv 0.11.27; any other minor passes through.
+  # Exact patches pass through verbatim. Supported minors map to the newest
+  # managed build the template's pinned uv downloads; any other minor passes
+  # through. scripts/test-render-contracts.sh fails and prints the table when
+  # a uv bump moves it.
   default: >-
     {{ {
       '3.10': '3.10.20', '3.11': '3.11.15', '3.12': '3.12.13',

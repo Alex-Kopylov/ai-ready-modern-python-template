@@ -182,6 +182,59 @@ elif [[ "$root_uv_pin" != "$template_uv_pin" ]]; then
 else
   printf 'ok -- root and template uv pins agree on %s\n' "$root_uv_pin"
 fi
+
+# copier.yml's python_version_pin table must name, for each supported minor,
+# the newest stable patch the shipped uv can download on every mainstream
+# platform. uv embeds that list in its binary, so the table is a pure function
+# of the template uv pin: bump uv, rerun this, paste the printed table.
+mise exec "aqua:astral-sh/uv@${template_uv_pin}" -- uv --version |
+  grep -Fq "uv ${template_uv_pin} " ||
+  fail "mise did not provide uv ${template_uv_pin}"
+mise exec "aqua:astral-sh/uv@${template_uv_pin}" -- \
+  env -u UV_PYTHON_DOWNLOADS_JSON_URL uv python list \
+  --all-versions --only-downloads --all-platforms --all-arches \
+  --output-format json >"${tmp_dir}/uv-python-downloads.json" ||
+  fail "uv ${template_uv_pin} could not list its Python downloads"
+mise exec -- uv run --no-project python - \
+  "${repo_root}/copier.yml" "${tmp_dir}/uv-python-downloads.json" \
+  "$template_uv_pin" <<'PY' >"${tmp_dir}/python-pins.txt" ||
+import json
+import re
+import sys
+
+copier_yml, downloads_json, uv_pin = sys.argv[1:]
+platforms = {  # os, arch, libc: where generated projects are developed and run
+    ("linux", "x86_64", "gnu"), ("linux", "aarch64", "gnu"),
+    ("macos", "x86_64", "none"), ("macos", "aarch64", "none"),
+    ("windows", "x86_64", "none"),
+}
+builds = {}  # stable cpython version -> platforms it downloads on
+for d in json.load(open(downloads_json, encoding="utf-8")):
+    if (d["implementation"] == "cpython" and d["variant"] == "default"
+            and re.fullmatch(r"3\.\d+\.\d+", d["version"])):
+        builds.setdefault(d["version"], set()).add((d["os"], d["arch"], d["libc"]))
+expected = {}  # ascending walk: the newest patch per minor wins
+for version in sorted(builds, key=lambda v: [int(p) for p in v.split(".")]):
+    minor = version.rsplit(".", 1)[0]
+    if platforms <= builds[version] and int(minor.split(".")[1]) >= 10:
+        expected[minor] = version
+
+block = re.search(r"^python_version_pin:\n(?:[ \t].*\n)+", open(copier_yml, encoding="utf-8").read(), re.M)
+actual = dict(re.findall(r"'(3\.\d+)': '(3\.\d+\.\d+)'", block.group(0) if block else ""))
+if actual != expected:
+    entries = ", ".join(f"'{m}': '{v}'" for m, v in expected.items())
+    sys.exit(
+        f"copier.yml python_version_pin disagrees with uv {uv_pin} downloads\n"
+        f"  copier.yml: {actual}\n  uv {uv_pin}:    {expected}\n"
+        f"  replace the table entries with: {entries}")
+for minor, version in expected.items():
+    print(minor, version)
+PY
+  fail "python_version_pin is stale for uv ${template_uv_pin}; see above"
+python_pin() {
+  awk -v minor="$1" '$1 == minor { print $2 }' "${tmp_dir}/python-pins.txt"
+}
+printf 'ok -- python_version_pin matches uv %s downloads\n' "$template_uv_pin"
 assert_contains "${repo_root}/copier.yml" '    mise run verify'
 assert_not_matches "${repo_root}/copier.yml" '^    mise run lint$'
 assert_contains "${repo_root}/AGENTS.md" \
@@ -666,7 +719,7 @@ assert_not_contains "${python_310_dir}/pyproject.toml" '[tool.ty.environment]'
 assert_not_matches \
   "${python_310_dir}/mise.toml" \
   '^[[:space:]]*python[[:space:]]*='
-assert_contains "${python_310_dir}/.python-version" '3.10.20'
+assert_contains "${python_310_dir}/.python-version" "$(python_pin 3.10)"
 assert_not_contains "${python_310_dir}/.ruff.toml" 'target-version'
 assert_not_contains "${python_310_dir}/Dockerfile" '0.11.26-python'
 
@@ -677,7 +730,7 @@ assert_not_contains "${python_311_dir}/pyproject.toml" '[tool.ty.environment]'
 assert_not_matches \
   "${python_311_dir}/mise.toml" \
   '^[[:space:]]*python[[:space:]]*='
-assert_contains "${python_311_dir}/.python-version" '3.11.15'
+assert_contains "${python_311_dir}/.python-version" "$(python_pin 3.11)"
 assert_not_contains "${python_311_dir}/.ruff.toml" 'target-version'
 assert_not_contains "${python_311_dir}/Dockerfile" '0.11.26-python'
 
