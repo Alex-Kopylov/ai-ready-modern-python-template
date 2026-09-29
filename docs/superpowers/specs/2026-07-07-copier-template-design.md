@@ -147,7 +147,9 @@ The Dockerfile:
   real application runtime.
 
 When GitHub automation is enabled, Dependabot always includes its Docker
-ecosystem block because the Dockerfile always exists.
+ecosystem block because the Dockerfile always exists. It ignores the uv image:
+that tag follows the uv pin in `mise.toml` through `mise run sync-docker-uv`,
+which the mise-upgrade workflow runs after each bump, so one PR moves both.
 
 ### GitHub automation
 
@@ -155,7 +157,8 @@ ecosystem block because the Dockerfile always exists.
 
 - `.github/workflows/ci.yml`;
 - `.github/workflows/mise-upgrade.yml`, a weekly `mise upgrade --bump` PR for
-  the `mise.toml` pins Dependabot cannot update;
+  the `mise.toml` pins Dependabot cannot update, with the Dockerfile's uv
+  image moved to the new uv pin;
 - `.github/dependabot.yml`;
 - `.github/zizmor.yml`;
 - the `check-jsonschema` development dependency;

@@ -208,6 +208,12 @@ if [[ "$scenario" == github-actions-on ]]; then
     fail "lint-gha-security must pass after removing workflow probes"
 fi
 
+# The Dockerfile's uv image follows mise.toml: the sync task repairs a stale tag.
+sed -i 's|^FROM ghcr.io/astral-sh/uv:.*|FROM ghcr.io/astral-sh/uv:0.11.26-trixie-slim|' Dockerfile
+mise run sync-docker-uv
+git diff --quiet -- Dockerfile ||
+  fail "sync-docker-uv did not move the Dockerfile's uv image to the mise.toml pin"
+
 mise run lint-shell ||
   fail "lint-shell must succeed with the baseline shell script present"
 printf '\nls $HOME\n' >> scripts/example.sh
