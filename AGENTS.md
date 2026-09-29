@@ -96,7 +96,18 @@ Use the `dev-workflow:version-bumper` skill for every version change. Follow
 its discovery and verification workflow instead of editing version strings by
 hand.
 
-After the release change is merged and CI is green, push the corresponding
-`vX.Y.Z` tag, publish a GitHub Release, and smoke-test
+Cut a release after merging any change users should receive. Copier ignores
+`main`: `copier copy` and `copier update` check out the latest PEP 440 tag
+(`--vcs-ref HEAD` is opt-in). A generated project records that tag's
+`_commit` and its answers in `.copier-answers.yml`; `copier update` renders
+the recorded and the new tagged versions and 3-way-merges the difference into
+the project. Untagged commits reach nobody, and a new question passed with
+`-d` is silently ignored until it is tagged.
+
+Bump major for breaking changes to questions, answers, or the rendered layout;
+minor for new questions or features; patch for fixes. Once CI is green on
+`main`, tag and publish in one step with
+`gh release create vX.Y.Z --target <main-sha> --generate-notes`, then
+smoke-test
 `uvx copier copy gh:Alex-Kopylov/ai-ready-modern-python-template my-project` so
 the default Copier command resolves to the new stable version.
