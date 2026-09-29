@@ -624,8 +624,6 @@ expected_github_off_markdownlint_globs="$(printf '%s\n' \
     "$github_off_markdownlint_globs" >&2
   fail "GitHub-off markdownlint target set changed"
 }
-assert_not_contains "${github_off_dir}/docs/lint-strategy.md" 'GitHub Actions'
-assert_not_contains "${github_off_dir}/docs/lint-strategy.md" 'workflow file'
 
 printf 'ok -- GitHub automation switches off without disabling Docker\n'
 

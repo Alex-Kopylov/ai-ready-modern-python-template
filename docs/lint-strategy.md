@@ -1,6 +1,6 @@
 # Lint Strategy
 
-This repository separates linting into two groups: **fast lint** and
+Generated projects separate linting into two groups: **fast lint** and
 **full lint**.
 
 The split exists because some linters are useful final gates but poor feedback

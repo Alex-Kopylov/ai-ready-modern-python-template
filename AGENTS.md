@@ -78,6 +78,8 @@ Inside a generated project, the standard commands are:
 
 - Read `docs/superpowers/specs/2026-07-07-copier-template-design.md` before
   changing the template design.
+- Follow `docs/lint-strategy.md` when placing linters in generated fast/full
+  lint tasks and hooks.
 - Keep coarse choices in `copier.yml`; keep fine-grained lint and tool tuning in
   generated files under `template/`.
 - Do not make lint or test tasks silently pass when configured paths are
