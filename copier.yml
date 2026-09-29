@@ -194,11 +194,11 @@ python_version_pin:
   type: str
   # Exact patches pass through verbatim. Supported minors map to the newest
   # managed build the template's pinned uv downloads; any other minor passes
-  # through. scripts/test-render-contracts.sh fails and prints the table when
-  # a uv bump moves it.
+  # through. scripts/sync-python-pins.sh derives the table from that uv; the
+  # mise-upgrade workflow reruns it with every uv bump.
   default: >-
     {{ {
-      '3.10': '3.10.20', '3.11': '3.11.15', '3.12': '3.12.13',
-      '3.13': '3.13.14', '3.14': '3.14.6',
+      '3.10': '3.10.21', '3.11': '3.11.16', '3.12': '3.12.14',
+      '3.13': '3.13.15', '3.14': '3.14.7',
     }.get(python_version, python_version) }}
   when: false
