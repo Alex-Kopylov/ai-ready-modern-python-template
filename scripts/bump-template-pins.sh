@@ -20,3 +20,6 @@ while IFS= read -r pin; do
   tool="${pin%% = *}"
   sed -i "s|^${tool} = \".*\"\$|${pin}|" "$template_mise"
 done < <(sed -n '/^\[tools\]/,/^\[/{/^[^#[].* = "/p}' "${project_dir}/mise.toml")
+
+# copier.yml's Python patch table follows the new uv pin.
+"${repo_root}/scripts/sync-python-pins.sh" >/dev/null

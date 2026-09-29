@@ -182,6 +182,15 @@ elif [[ "$root_uv_pin" != "$template_uv_pin" ]]; then
 else
   printf 'ok -- root and template uv pins agree on %s\n' "$root_uv_pin"
 fi
+
+# copier.yml's python_version_pin table is derived from the template uv pin;
+# the mise-upgrade workflow rewrites it together with that pin.
+"${repo_root}/scripts/sync-python-pins.sh" --check >"${tmp_dir}/python-pins.txt" ||
+  fail "python_version_pin is stale for uv ${template_uv_pin}; see above"
+python_pin() {
+  awk -v minor="$1" '$1 == minor { print $2 }' "${tmp_dir}/python-pins.txt"
+}
+printf 'ok -- python_version_pin matches uv %s downloads\n' "$template_uv_pin"
 assert_contains "${repo_root}/copier.yml" '    mise run verify'
 assert_not_matches "${repo_root}/copier.yml" '^    mise run lint$'
 assert_contains "${repo_root}/AGENTS.md" \
@@ -666,7 +675,7 @@ assert_not_contains "${python_310_dir}/pyproject.toml" '[tool.ty.environment]'
 assert_not_matches \
   "${python_310_dir}/mise.toml" \
   '^[[:space:]]*python[[:space:]]*='
-assert_contains "${python_310_dir}/.python-version" '3.10.20'
+assert_contains "${python_310_dir}/.python-version" "$(python_pin 3.10)"
 assert_not_contains "${python_310_dir}/.ruff.toml" 'target-version'
 assert_not_contains "${python_310_dir}/Dockerfile" '0.11.26-python'
 
@@ -677,7 +686,7 @@ assert_not_contains "${python_311_dir}/pyproject.toml" '[tool.ty.environment]'
 assert_not_matches \
   "${python_311_dir}/mise.toml" \
   '^[[:space:]]*python[[:space:]]*='
-assert_contains "${python_311_dir}/.python-version" '3.11.15'
+assert_contains "${python_311_dir}/.python-version" "$(python_pin 3.11)"
 assert_not_contains "${python_311_dir}/.ruff.toml" 'target-version'
 assert_not_contains "${python_311_dir}/Dockerfile" '0.11.26-python'
 
