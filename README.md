@@ -24,7 +24,7 @@ The wizard keeps project-shape choices small and explicit:
 | `project_description` | `Project description` | README and package metadata |
 | `main_branch_name` | `main` | Git setup guidance and generated CI push branch |
 | `python_version` | `3.14` | Python, uv, Ruff, ty, and Docker |
-| `license` | `MIT` | MIT, Proprietary, or Skip |
+| `license` | `MIT` | MIT (default), UNLICENSED, 27 other popular SPDX licenses, or Skip |
 | `author_name` | empty | License owner and optional Docker maintainer |
 | `use_github_actions` | `true` | Entire GitHub automation bundle |
 | `extra_linters` | all | jscpd, typos, markdownlint, and commentwall |

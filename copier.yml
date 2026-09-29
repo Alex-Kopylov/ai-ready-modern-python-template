@@ -2,6 +2,18 @@ _subdirectory: template
 _answers_file: .copier-answers.yml
 _min_copier_version: "9.1.0"
 
+# License texts are included by LICENSE.jinja, never rendered on their own.
+# Setting _exclude replaces copier's defaults, so they are repeated.
+_exclude:
+  - copier.yml
+  - "~*"
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .DS_Store
+  - .svn
+  - _licenses
+
 # Explicit jinja whitespace behavior: copier's defaults changed across
 # releases (9.16 stopped trimming block-tag lines), which silently broke
 # rendered markdown/TOML whitespace. Every .jinja file here is authored
@@ -92,11 +104,38 @@ python_version:
 
 license:
   type: str
-  help: Project license; choose Skip to define it after generation.
+  help: Project license, ranked by GitHub popularity; choose Skip to define it after generation.
   choices:
     MIT: MIT
-    Proprietary: Proprietary
+    "UNLICENSED - proprietary (no LICENSE file)": UNLICENSED
+    Apache-2.0: Apache-2.0
     "Skip - define later (no LICENSE file)": Skip
+    GPL-3.0: GPL-3.0
+    AGPL-3.0: AGPL-3.0
+    BSD-3-Clause: BSD-3-Clause
+    GPL-2.0: GPL-2.0
+    CC0-1.0: CC0-1.0
+    Unlicense: Unlicense
+    MPL-2.0: MPL-2.0
+    BSD-2-Clause: BSD-2-Clause
+    LGPL-3.0: LGPL-3.0
+    CC-BY-4.0: CC-BY-4.0
+    LGPL-2.1: LGPL-2.1
+    ISC: ISC
+    CC-BY-SA-4.0: CC-BY-SA-4.0
+    BSD-3-Clause-Clear: BSD-3-Clause-Clear
+    MIT-0: MIT-0
+    EPL-2.0: EPL-2.0
+    EUPL-1.2: EUPL-1.2
+    BSL-1.0: BSL-1.0
+    "0BSD": "0BSD"
+    WTFPL: WTFPL
+    Zlib: Zlib
+    MulanPSL-2.0: MulanPSL-2.0
+    EPL-1.0: EPL-1.0
+    UPL-1.0: UPL-1.0
+    OFL-1.1: OFL-1.1
+    Artistic-2.0: Artistic-2.0
   default: MIT
 
 author_name:
