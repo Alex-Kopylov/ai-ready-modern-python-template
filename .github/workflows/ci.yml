@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request: {}
+  workflow_dispatch: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -28,9 +29,9 @@ jobs:
       - uses: jdx/mise-action@v4.2.0
         with:
           github_token: ${{ github.token }}
-      - run: mise exec -- yamllint -c template/.yamllint copier.yml .github/workflows/ci.yml
-      - run: mise exec -- actionlint .github/workflows/ci.yml
-      - run: mise exec -- zizmor .github/workflows/ci.yml
+      - run: mise exec -- yamllint -c template/.yamllint copier.yml .github/workflows/*.yml
+      - run: mise exec -- actionlint .github/workflows/*.yml
+      - run: mise exec -- zizmor .github/workflows
       - run: git ls-files -z '*.py' | xargs -0 mise exec -- commentwall
 
   render-contracts:
