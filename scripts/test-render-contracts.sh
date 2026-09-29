@@ -627,11 +627,11 @@ expected_github_off_markdownlint_globs="$(printf '%s\n' \
 
 printf 'ok -- GitHub automation switches off without disabling Docker\n'
 
-proprietary_dir="${tmp_dir}/proprietary"
-render_project "$proprietary_dir" --data license=Proprietary
-assert_path_absent "${proprietary_dir}/LICENSE"
+unlicensed_dir="${tmp_dir}/unlicensed"
+render_project "$unlicensed_dir" --data license=UNLICENSED
+assert_path_absent "${unlicensed_dir}/LICENSE"
 assert_contains \
-  "${proprietary_dir}/pyproject.toml" \
+  "${unlicensed_dir}/pyproject.toml" \
   'license = "LicenseRef-Proprietary"'
 
 skip_dir="${tmp_dir}/skip-license"
@@ -639,7 +639,19 @@ render_project "$skip_dir" --data license=Skip
 assert_path_absent "${skip_dir}/LICENSE"
 assert_not_matches "${skip_dir}/pyproject.toml" '^[[:space:]]*license[[:space:]]='
 
-printf 'ok -- Proprietary and Skip license contracts render correctly\n'
+printf 'ok -- UNLICENSED and Skip license contracts render correctly\n'
+
+for spdx in $(sed -n '/^license:/,/^author_name:/p' "${repo_root}/copier.yml" |
+  sed -n 's/^    "\{0,1\}\([A-Za-z0-9.-]*\)"\{0,1\}: .*/\1/p' |
+  grep -vxE 'UNLICENSED|Skip'); do
+  spdx_dir="${tmp_dir}/license-${spdx}"
+  render_project "$spdx_dir" --data "license=${spdx}"
+  assert_file_present "${spdx_dir}/LICENSE"
+  assert_contains "${spdx_dir}/pyproject.toml" "license = \"${spdx}\""
+  assert_not_matches "${spdx_dir}/LICENSE" '\{\{'
+done
+
+printf 'ok -- every SPDX license renders LICENSE and metadata\n'
 
 author_dir="${tmp_dir}/named-author"
 render_project "$author_dir" --data 'author_name=Ada Lovelace'
