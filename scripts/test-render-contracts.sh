@@ -164,8 +164,8 @@ if listed != expected:
 PY
 printf 'ok -- copier.yml keyword list matches keyword.kwlist\n'
 
-# Renovate bumps the root uv pin only (template/** is ignored), and the two
-# files are meant to stay on one version. Drift is a nudge to realign, not a
+# The mise-upgrade workflow bumps the root and template uv pins together, and
+# the two files are meant to stay on one version. Drift is a nudge to realign, not a
 # reason to block the build, so this warns instead of failing.
 read_uv_pin() {
   sed -n 's|^"aqua:astral-sh/uv" = "\(.*\)"$|\1|p' "$1"
@@ -543,9 +543,9 @@ printf 'ok -- Docker and Hadolint are part of every default render\n'
 
 for automation_file in \
   .github/workflows/ci.yml \
+  .github/workflows/mise-upgrade.yml \
   .github/dependabot.yml \
-  .github/zizmor.yml \
-  renovate.json5; do
+  .github/zizmor.yml; do
   assert_file_present "${default_dir}/${automation_file}"
 done
 assert_contains "${default_dir}/pyproject.toml" '"check-jsonschema"'
@@ -601,7 +601,6 @@ github_off_dir="${tmp_dir}/github-actions-off"
 render_project "$github_off_dir" --data use_github_actions=false
 
 assert_path_absent "${github_off_dir}/.github"
-assert_path_absent "${github_off_dir}/renovate.json5"
 assert_file_present "${github_off_dir}/Dockerfile"
 assert_file_present "${github_off_dir}/.hadolint.yaml"
 assert_not_contains "${github_off_dir}/pyproject.toml" "check-jsonschema"

@@ -61,8 +61,8 @@ Python test suite.
 Copier filename conditions are limited to genuinely optional files:
 
 - MIT `LICENSE`;
-- `.github/workflows/ci.yml`, `.github/dependabot.yml`, `.github/zizmor.yml`,
-  and `renovate.json5`;
+- `.github/workflows/ci.yml`, `.github/workflows/mise-upgrade.yml`,
+  `.github/dependabot.yml`, and `.github/zizmor.yml`;
 - jscpd and markdownlint configuration.
 
 ### Wizard
@@ -154,9 +154,10 @@ ecosystem block because the Dockerfile always exists.
 `use_github_actions` is the only structural switch. When enabled it renders:
 
 - `.github/workflows/ci.yml`;
+- `.github/workflows/mise-upgrade.yml`, a weekly `mise upgrade --bump` PR for
+  the `mise.toml` pins Dependabot cannot update;
 - `.github/dependabot.yml`;
 - `.github/zizmor.yml`;
-- `renovate.json5`;
 - the `check-jsonschema` development dependency;
 - actionlint and zizmor tool pins, tasks, and prek hooks.
 

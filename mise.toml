@@ -3,8 +3,9 @@
 #
 # Every version is hard-pinned: "latest" made CI depend on whatever the day's
 # release happened to be, which is how copier 9.18 broke rendering without a
-# single commit touching this repository. Renovate proposes the bumps, so the
-# pins stay current without anyone watching releases -- see renovate.json5.
+# single commit touching this repository. The weekly mise-upgrade workflow
+# opens a PR bumping these pins and, via scripts/bump-template-pins.sh, the
+# ones in template/mise.toml.jinja.
 [tools]
 # aqua backend: mise's core uv plugin extracts current uv tarballs incorrectly
 # (binary stays under uv-<target>/ with no bin/), silently falling back to any
