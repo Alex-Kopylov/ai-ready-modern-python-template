@@ -8,19 +8,17 @@
 # (binary stays under uv-<target>/ with no bin/), silently falling back to
 # any system uv.
 "aqua:astral-sh/uv" = "0.12.19"
-{% if "jscpd" in extra_linters or "markdownlint" in extra_linters -%}
-node = "26.10.0"
-{% endif -%}
 {% if "jscpd" in extra_linters -%}
+node = "26.10.0"
 "npm:jscpd" = "5.3.3"
-{% endif -%}
-{% if "markdownlint" in extra_linters -%}
-"npm:markdownlint-cli2" = "0.23.3"
 {% endif -%}
 "aqua:01mf02/jaq" = "3.1.1"
 "aqua:gitleaks/gitleaks" = "8.30.1"
 "aqua:hadolint/hadolint" = "2.15.1"
 "aqua:koalaman/shellcheck" = "0.11.0"
+{% if "rumdl" in extra_linters -%}
+"aqua:rvben/rumdl" = "0.2.78"
+{% endif -%}
 {% if use_github_actions -%}
 "aqua:rhysd/actionlint" = "1.7.12"
 {% endif -%}
@@ -58,7 +56,7 @@ run = [
     "lint-python-fast",
     "lint-dockerfile",
     "lint-shell",
-    {% if "markdownlint" in extra_linters %}
+    {% if "rumdl" in extra_linters %}
     "lint-md",
     {% endif %}
     "lint-yml",
@@ -117,10 +115,10 @@ run = "mise exec -- hadolint Dockerfile"
 description = "Lint shell scripts with ShellCheck"
 run = "find . -name '*.sh' -not -path './.venv/*' -not -path './node_modules/*' -exec mise exec -- shellcheck {} +"
 
-{% if "markdownlint" in extra_linters -%}
+{% if "rumdl" in extra_linters -%}
 [tasks.lint-md]
 description = "Lint Markdown files"
-run = "mise exec -- markdownlint-cli2"
+run = "mise exec -- rumdl check ."
 
 {% endif -%}
 [tasks.lint-yml]
@@ -201,11 +199,18 @@ run = [
 ]
 
 [tasks.format]
+{% if "rumdl" in extra_linters %}
+description = "Format and autofix Python, TOML, and Markdown files"
+{% else %}
 description = "Format and autofix Python and TOML files"
+{% endif %}
 run = [
   "uv run ruff format src tests",
   "uv run ruff check --fix src tests",
   "mise exec -- taplo fmt",
+  {% if "rumdl" in extra_linters %}
+  "mise exec -- rumdl check --fix .",
+  {% endif %}
 ]
 
 [tasks.install-hooks]

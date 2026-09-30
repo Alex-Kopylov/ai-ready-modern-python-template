@@ -212,28 +212,37 @@ git diff --quiet -- scripts/example.sh ||
 
 printf '#bad heading\n\n\n\nx\n' > EXTRA.md
 if mise run lint-md; then
-  fail "markdownlint accepted non-conforming root EXTRA.md"
+  fail "rumdl accepted non-conforming root EXTRA.md"
 fi
 rm EXTRA.md
 
 mkdir -p .claude
 printf '#bad heading\n\n\n\nx\n' > .claude/probe.md
 mise run lint-md ||
-  fail "markdownlint did not ignore .claude/probe.md"
+  fail "rumdl did not ignore .claude/probe.md"
 rm -rf .claude
 
 agents_backup="${tmp_dir}/AGENTS.md.probe-backup"
 cp AGENTS.md "$agents_backup"
 printf '#bad heading\n\n\n\nx\n' > AGENTS.md
 mise run lint-md ||
-  fail "markdownlint did not ignore root AGENTS.md"
+  fail "rumdl did not ignore root AGENTS.md"
 cp "$agents_backup" AGENTS.md
 
 mkdir -p docs/specs
 printf '#bad heading\n\n\n\nx\n' > docs/specs/probe.md
 if mise run lint-md; then
-  fail "markdownlint accepted non-conforming docs/specs/probe.md"
+  fail "rumdl accepted non-conforming docs/specs/probe.md"
 fi
+
+# MD013 reflow is why rumdl replaced markdownlint-cli2: format must wrap prose.
+printf '# Probe\n\n%s\n' "$(printf 'word %.0s' {1..40})" > docs/specs/probe.md
+if mise run lint-md; then
+  fail "rumdl accepted an over-long line in docs/specs/probe.md"
+fi
+mise run format
+mise run lint-md ||
+  fail "mise run format did not reflow docs/specs/probe.md"
 rm -rf docs/specs
 
 # Scope the residue check to the probe artefacts. The tree already carries
@@ -241,10 +250,10 @@ rm -rf docs/specs
 # so a whole-tree `git status` check would be a false positive.
 for probe in EXTRA.md .claude docs/specs; do
   [[ ! -e "$probe" ]] ||
-    fail "markdownlint probe left ${probe} behind in the generated project"
+    fail "rumdl probe left ${probe} behind in the generated project"
 done
 git diff --quiet -- AGENTS.md ||
-  fail "markdownlint probe did not restore AGENTS.md"
+  fail "rumdl probe did not restore AGENTS.md"
 
 mise run test
 
