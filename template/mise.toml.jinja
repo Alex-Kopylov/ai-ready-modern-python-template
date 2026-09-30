@@ -211,11 +211,3 @@ run = [
 [tasks.install-hooks]
 description = "Install prek-managed pre-commit and pre-push hooks"
 run = "uv run prek install --hook-type pre-commit --hook-type pre-push"
-
-[tasks.clean]
-description = "Remove local build and test cache directories"
-run = [
-  "find . -type d -name __pycache__ -exec rm -rf {} +",
-  "find . -type d -name .pytest_cache -exec rm -rf {} +",
-  "rm -rf dist build *.egg-info",
-]
