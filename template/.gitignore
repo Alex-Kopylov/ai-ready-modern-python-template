@@ -8,10 +8,9 @@ node_modules/
 .venv/
 .ruff_cache/
 .pytest_cache/
-dist/
-build/
+/dist/
+/build/
 *.egg-info/
-reports/
 .coverage
 coverage.xml
 htmlcov/
