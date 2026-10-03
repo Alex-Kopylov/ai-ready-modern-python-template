@@ -541,6 +541,14 @@ assert_contains "${default_dir}/README.md" '## Docker'
 
 printf 'ok -- Docker and Hadolint are part of every default render\n'
 
+# Unanchored ignore patterns hide same-named directories anywhere in the
+# tree (a src/<pkg>/build/ subpackage); generated output lives at the root.
+assert_contains "${default_dir}/.gitignore" '/dist/'
+assert_contains "${default_dir}/.gitignore" '/build/'
+assert_not_matches "${default_dir}/.gitignore" '^(dist|build|reports)/$'
+assert_not_contains "${default_dir}/.jscpd.json" '"output"'
+printf 'ok -- .gitignore anchors build output to the project root\n'
+
 for automation_file in \
   .github/workflows/ci.yml \
   .github/workflows/mise-upgrade.yml \
