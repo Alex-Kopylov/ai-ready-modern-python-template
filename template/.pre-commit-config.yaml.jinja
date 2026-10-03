@@ -109,6 +109,17 @@ repos:
         language: system
         files: (^|/)Dockerfile(\..*)?$|\.dockerfile$
 
+{% if "rumdl" in extra_linters %}
+      # Whole-tree run like lint-md: explicit filenames bypass the include
+      # globs and .gitignore in .rumdl.toml.
+      - id: rumdl
+        name: rumdl (markdown)
+        entry: mise exec -- rumdl check .
+        language: system
+        types: [markdown]
+        pass_filenames: false
+
+{% endif %}
 {% if use_github_actions %}
       - id: check-jsonschema-github-workflows
         name: check-jsonschema (GitHub Workflows)
@@ -177,6 +188,4 @@ repos:
 {% endif %}
 # === INTENTIONAL EXCLUSIONS ===
 # The following tools are useful in editor, agent, or CI workflows but NOT in hook runs:
-# - markdownlint-cli2: pass_filenames=false causes it to scan gitignored docs/plans/
-#   (auto-generated reports that don't conform to style rules); removed to reduce noise
 # - vulture: High false positive rate, advisory-only (needs whitelist)

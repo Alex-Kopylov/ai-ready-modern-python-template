@@ -155,12 +155,12 @@ extra_linters:
   choices:
     jscpd: jscpd
     typos: typos
-    markdownlint: markdownlint
+    rumdl: rumdl
     commentwall: commentwall
   default:
     - jscpd
     - typos
-    - markdownlint
+    - rumdl
     - commentwall
 
 parallel_testing:
