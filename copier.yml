@@ -90,8 +90,9 @@ main_branch_name:
 python_version:
   type: str
   help: >-
-    Python version for uv, requires-python, ty, and .python-version. Prefer a
-    minor like 3.13 for a template-verified managed patch. Exact patches like
+    Python version for .python-version and requires-python; ruff and ty read
+    their target from requires-python. Prefer a minor like 3.13 for a
+    template-verified managed patch. Exact patches like
     3.11.9 are expert mode and must be available from the pinned uv release.
   default: "3.14"
   # Floor computed from requires-python of the latest dev toolchain deps:

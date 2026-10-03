@@ -146,6 +146,23 @@ printf \
   'ok -- uv and .venv use Python %s; mise provisions no Python\n' \
   "$uv_python_version"
 
+# ruff and ty take their target from requires-python; no second copy exists.
+python_minor="${uv_python_version%.*}"
+ruff_target="$(
+  mise exec -- uv run ruff check --show-settings src/my_project/__init__.py |
+    sed -n 's/^linter.unresolved_target_version = //p'
+)"
+[[ "$ruff_target" == "$python_minor" ]] ||
+  fail "ruff targets Python ${ruff_target}, expected ${python_minor}"
+ty_target="$(
+  mise exec -- uv run ty check -vv 2>&1 |
+    sed -n 's/.*Resolved requires-python constraint to: //p' | head -n 1
+)"
+[[ "$ty_target" == "$python_minor" ]] ||
+  fail "ty targets Python ${ty_target}, expected ${python_minor}"
+printf 'ok -- ruff and ty target Python %s from requires-python\n' \
+  "$python_minor"
+
 mise exec -- taplo fmt --check
 sed 's/^dependencies = \[\]$/dependencies=[]/' \
   pyproject.toml > pyproject.toml.tmp
