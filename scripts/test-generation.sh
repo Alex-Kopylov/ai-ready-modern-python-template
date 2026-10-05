@@ -163,6 +163,9 @@ git diff --quiet || {
 
 mise exec -- uv run python -c "import my_project"
 mise run verify
+# Lint leaves no report files behind: jscpd reports to the console only.
+[[ ! -e reports && ! -e report ]] ||
+  fail "mise run verify left a report directory behind"
 
 if [[ "$scenario" == github-actions-on ]]; then
   for workflow_extension in yml yaml; do
