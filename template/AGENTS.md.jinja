@@ -30,8 +30,8 @@ shared quality gates without documenting the reason.
   run `mise install` before invoking native linters directly.
 - Docker and Hadolint are baseline. The Dockerfile deliberately keeps a
   framework-neutral smoke command until the project chooses a runtime.
-{% if "jscpd" in extra_linters or "markdownlint" in extra_linters %}
-- Node-based lint CLIs are pinned in `mise.toml` through mise's npm backend
+{% if "jscpd" in extra_linters %}
+- jscpd is pinned in `mise.toml` through mise's npm backend
   and installed with `mise install`.
 {% endif %}
 

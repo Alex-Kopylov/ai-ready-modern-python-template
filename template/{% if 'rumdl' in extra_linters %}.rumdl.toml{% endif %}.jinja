@@ -1,0 +1,53 @@
+# rumdl configuration: markdownlint rules plus MD013 reflow
+# https://github.com/rvben/rumdl
+
+[global]
+line-length = 80
+# "/*.md" anchors to the project root; a bare "*.md" matches at any depth.
+include = [
+  "/*.md",
+{% if use_github_actions %}
+  ".github/**/*.md",
+{% endif %}
+  "docs/**/*.md",
+]
+# These exclusions are load-bearing. The root glob above reaches every
+# top-level document, so the entries below are what keep machine-consumed
+# files out of the linter. Do not delete them as unreachable -- they enforce
+# the policy set in commit 3db8a2e (AI agent working files are not lint
+# targets).
+exclude = [
+  # AI agent working files -- consumed by agents, not humans
+  "CLAUDE.md",
+  "AGENTS.md",
+  "GEMINI.md",
+  ".claude/**",
+  ".codex/**",
+  ".cursor/**",
+  ".gemini/**",
+  # Legal text -- reformatting can break SPDX and license-scanner detection
+  "LICENSE.md",
+  # Vendored trees and build output
+  ".venv/**",
+  "goals/**",
+  "node_modules/**",
+  "build/**",
+  "dist/**",
+]
+# MD033 (inline HTML): pseudo-HTML tags (e.g. <example>, <context>) are a
+# common prompt-engineering technique for structuring prompts.
+disable = ["MD033"]
+# Reflow can wrap "#12" to the start of a line, and the MD018 fix would then
+# turn it into a heading. Leaving MD018 unfixable makes that a lint failure.
+unfixable = ["MD018"]
+
+[MD013]
+# Code blocks and tables keep their long lines; wrapping would break them.
+code-blocks = false
+tables = false
+# `rumdl fmt` wraps long prose lines instead of only reporting them.
+reflow = true
+
+[MD024]
+# Allow repeated headings under different parents (e.g. changelog sections)
+siblings-only = true

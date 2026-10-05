@@ -82,17 +82,17 @@ assert_git_not_ignored() {
   esac
 }
 
-jsonc_array_entries() {
+rumdl_global_entries() {
   local file="$1"
   local key="$2"
 
-  awk -v marker="\"${key}\": [" '
-    index($0, marker) { in_array = 1; next }
-    in_array && /^[[:space:]]*]/ { exit }
-    in_array && match($0, /"[^"]+"/) {
-      print substr($0, RSTART + 1, RLENGTH - 2)
-    }
-  ' "$file"
+  mise exec -- uv run --no-project python - "$file" "$key" <<'PY'
+import sys
+import tomllib
+
+with open(sys.argv[1], "rb") as config:
+    print("\n".join(tomllib.load(config)["global"][sys.argv[2]]))
+PY
 }
 
 render_project() {
@@ -442,20 +442,20 @@ expected_quick_start_commands="$(printf '%s\n' \
 
 printf 'ok -- agent bridge, local ignores, and verify task form the baseline\n'
 
-markdownlint_config="${default_dir}/.markdownlint-cli2.jsonc"
-markdownlint_globs="$(jsonc_array_entries "$markdownlint_config" globs)"
-expected_markdownlint_globs="$(printf '%s\n' \
-  '*.md' \
+rumdl_config="${default_dir}/.rumdl.toml"
+rumdl_includes="$(rumdl_global_entries "$rumdl_config" include)"
+expected_rumdl_includes="$(printf '%s\n' \
+  '/*.md' \
   '.github/**/*.md' \
   'docs/**/*.md')"
-[[ "$markdownlint_globs" == "$expected_markdownlint_globs" ]] || {
-  printf 'Expected markdownlint globs:\n%s\nActual markdownlint globs:\n%s\n' \
-    "$expected_markdownlint_globs" \
-    "$markdownlint_globs" >&2
-  fail "default markdownlint target set changed"
+[[ "$rumdl_includes" == "$expected_rumdl_includes" ]] || {
+  printf 'Expected rumdl includes:\n%s\nActual rumdl includes:\n%s\n' \
+    "$expected_rumdl_includes" \
+    "$rumdl_includes" >&2
+  fail "default rumdl target set changed"
 }
-markdownlint_ignores="$(jsonc_array_entries "$markdownlint_config" ignores)"
-expected_markdownlint_ignores="$(printf '%s\n' \
+rumdl_excludes="$(rumdl_global_entries "$rumdl_config" exclude)"
+expected_rumdl_excludes="$(printf '%s\n' \
   CLAUDE.md \
   AGENTS.md \
   GEMINI.md \
@@ -469,14 +469,14 @@ expected_markdownlint_ignores="$(printf '%s\n' \
   'node_modules/**' \
   'build/**' \
   'dist/**')"
-[[ "$markdownlint_ignores" == "$expected_markdownlint_ignores" ]] || {
-  printf 'Expected markdownlint ignores:\n%s\nActual markdownlint ignores:\n%s\n' \
-    "$expected_markdownlint_ignores" \
-    "$markdownlint_ignores" >&2
-  fail "default markdownlint ignore set changed"
+[[ "$rumdl_excludes" == "$expected_rumdl_excludes" ]] || {
+  printf 'Expected rumdl excludes:\n%s\nActual rumdl excludes:\n%s\n' \
+    "$expected_rumdl_excludes" \
+    "$rumdl_excludes" >&2
+  fail "default rumdl exclude set changed"
 }
 
-printf 'ok -- markdownlint targets root and documentation globs with explicit ignores\n'
+printf 'ok -- rumdl targets root and documentation globs with explicit excludes\n'
 
 assert_matches "${default_dir}/pyproject.toml" '^\[build-system\]$'
 assert_not_matches \
@@ -610,18 +610,18 @@ for automation_term in actionlint zizmor check-jsonschema; do
 done
 assert_not_contains "${github_off_dir}/README.md" '## CI'
 assert_not_contains "${github_off_dir}/.dockerignore" '.github/'
-assert_not_contains "${github_off_dir}/.markdownlint-cli2.jsonc" '.github/'
-github_off_markdownlint_globs="$(
-  jsonc_array_entries "${github_off_dir}/.markdownlint-cli2.jsonc" globs
+assert_not_contains "${github_off_dir}/.rumdl.toml" '.github/'
+github_off_rumdl_includes="$(
+  rumdl_global_entries "${github_off_dir}/.rumdl.toml" include
 )"
-expected_github_off_markdownlint_globs="$(printf '%s\n' \
-  '*.md' \
+expected_github_off_rumdl_includes="$(printf '%s\n' \
+  '/*.md' \
   'docs/**/*.md')"
-[[ "$github_off_markdownlint_globs" == "$expected_github_off_markdownlint_globs" ]] || {
-  printf 'Expected GitHub-off markdownlint globs:\n%s\nActual globs:\n%s\n' \
-    "$expected_github_off_markdownlint_globs" \
-    "$github_off_markdownlint_globs" >&2
-  fail "GitHub-off markdownlint target set changed"
+[[ "$github_off_rumdl_includes" == "$expected_github_off_rumdl_includes" ]] || {
+  printf 'Expected GitHub-off rumdl includes:\n%s\nActual includes:\n%s\n' \
+    "$expected_github_off_rumdl_includes" \
+    "$github_off_rumdl_includes" >&2
+  fail "GitHub-off rumdl target set changed"
 }
 
 printf 'ok -- GitHub automation switches off without disabling Docker\n'
@@ -719,12 +719,11 @@ printf 'ok -- mutmut can be excluded from development dependencies\n'
 no_linters_dir="${tmp_dir}/no-optional-linters"
 render_project "$no_linters_dir" --data 'extra_linters=[]'
 assert_path_absent "${no_linters_dir}/.jscpd.json"
-assert_path_absent "${no_linters_dir}/.markdownlint.jsonc"
-assert_path_absent "${no_linters_dir}/.markdownlint-cli2.jsonc"
+assert_path_absent "${no_linters_dir}/.rumdl.toml"
 for optional_term in \
   'node = ' \
   'npm:jscpd' \
-  'npm:markdownlint-cli2' \
+  'aqua:rvben/rumdl' \
   'aqua:crate-ci/typos' \
   'github:Alex-Kopylov/commentwall' \
   '[tasks.lint-md]' \
@@ -736,6 +735,8 @@ done
 assert_not_contains "${no_linters_dir}/.pre-commit-config.yaml" '      - id: jscpd'
 assert_not_contains "${no_linters_dir}/.pre-commit-config.yaml" '      - id: typos'
 assert_not_contains "${no_linters_dir}/.pre-commit-config.yaml" '      - id: commentwall'
+assert_not_contains "${no_linters_dir}/.pre-commit-config.yaml" '      - id: rumdl'
+assert_not_contains "${no_linters_dir}/mise.toml" 'rumdl check --fix'
 
 printf 'ok -- optional linter selection can be empty\n'
 
