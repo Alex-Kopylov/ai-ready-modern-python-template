@@ -23,7 +23,7 @@
 default_stages: [pre-commit, pre-push]
 
 # AI agent working files are not lint targets (gitleaks still covers them
-# via always_run below)
+# via always_run below). Mirrors .ignore, which prek cannot read.
 exclude: ^(\.claude|\.codex|\.cursor|\.gemini)/|^(CLAUDE|AGENTS|GEMINI)\.md$
 
 repos:

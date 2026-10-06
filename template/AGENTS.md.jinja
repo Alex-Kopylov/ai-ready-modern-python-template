@@ -38,6 +38,8 @@ shared quality gates without documenting the reason.
 ## Workflow
 
 - Prefer the existing `mise run` tasks before invoking tools directly.
+- List paths that no linter should check in `.ignore`; its header names the
+  configs that must mirror it.
 - Do not make lint or test tasks silently pass when configured paths are
   missing; restore the path or update the configuration instead.
 - Temporary ad hoc tests are fine while developing or debugging. Remove them

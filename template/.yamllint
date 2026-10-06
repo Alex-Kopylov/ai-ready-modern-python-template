@@ -4,15 +4,8 @@ yaml-files:
   - '*.yaml'
   - '*.yml'
 
-# Ignored paths
-ignore:
-  - .venv/
-  - node_modules/
-  # AI agent working directories
-  - .claude/
-  - .codex/
-  - .cursor/
-  - .gemini/
+# Skip gitignored paths and the shared lint ignore list
+ignore-from-file: [.gitignore, .ignore]
 
 rules:
   # Reject duplicate and unused anchors in addition to undeclared aliases

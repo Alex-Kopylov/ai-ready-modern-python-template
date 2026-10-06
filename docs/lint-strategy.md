@@ -81,3 +81,17 @@ Use these rules when adding a new linter:
 `deptry` belongs in full lint and the commit hook, not fast lint. Dependency
 declaration checks are valuable before code is committed, but they can produce
 false alarms while dependencies and imports are still being edited.
+
+## Ignored Paths
+
+Lint tasks find files the way Ruff does: every file on disk, hidden files
+included, minus `.git` and anything matched by `.gitignore` or `.ignore`.
+Tools that cannot read those files themselves (ShellCheck, jaq, Taplo) get
+their file list from `fd`.
+
+`.ignore` is the single list of paths no linter checks, such as AI agent
+working files. fd, yamllint (`ignore-from-file`), Ruff, rumdl, typos, and
+deptry read it. Two configs must mirror it: the prek global `exclude` (prek
+cannot read it; `scripts/test-render-contracts.sh` checks they agree) and the
+rumdl `exclude` for file entries (rumdl applies `.ignore` to directories only).
+Gitleaks deliberately ignores `.ignore` and keeps scanning everything.

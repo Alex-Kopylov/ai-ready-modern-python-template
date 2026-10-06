@@ -1,0 +1,15 @@
+# Paths no linter checks, in .gitignore syntax. fd (lint-shell, lint-json,
+# lint-toml, format), yamllint, ruff, rumdl, typos and deptry read this file.
+# Mirror every change in:
+# - the global `exclude` of .pre-commit-config.yaml (prek cannot read it);
+# - with rumdl selected, the `exclude` of .rumdl.toml for file entries (rumdl
+#   applies .ignore to directories only).
+
+# AI agent working files
+/.claude/
+/.codex/
+/.cursor/
+/.gemini/
+/CLAUDE.md
+/AGENTS.md
+/GEMINI.md

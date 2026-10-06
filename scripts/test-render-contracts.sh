@@ -380,6 +380,21 @@ git -C "$default_dir" init --quiet
 assert_git_ignored "$default_dir" "CLAUDE.local.md"
 assert_git_ignored "$default_dir" ".claude/settings.local.json"
 assert_git_ignored "$default_dir" ".claude/worktrees/feature/src/module.py"
+
+# prek cannot read .ignore and rumdl applies it to directories only, so both
+# must repeat its entries.
+prek_exclude="$(sed -n 's/^exclude: //p' "${default_dir}/.pre-commit-config.yaml")"
+[[ -n "$prek_exclude" ]] || fail "missing prek global exclude"
+while IFS= read -r ignored; do
+  sample="${ignored#/}"
+  if [[ "$sample" == */ ]]; then
+    sample="${sample}probe"
+  else
+    assert_contains "${default_dir}/.rumdl.toml" "\"${sample}\","
+  fi
+  grep -Eq -- "$prek_exclude" <<<"$sample" ||
+    fail ".ignore entry ${ignored} is missing from the prek global exclude"
+done < <(grep -Ev '^(#|$)' "${default_dir}/.ignore")
 assert_git_not_ignored "$default_dir" ".claude/settings.json"
 assert_git_not_ignored "$default_dir" ".claude/commands/review.md"
 
@@ -460,10 +475,6 @@ expected_rumdl_excludes="$(printf '%s\n' \
   CLAUDE.md \
   AGENTS.md \
   GEMINI.md \
-  '.claude/**' \
-  '.codex/**' \
-  '.cursor/**' \
-  '.gemini/**' \
   LICENSE.md \
   '.venv/**' \
   'goals/**' \

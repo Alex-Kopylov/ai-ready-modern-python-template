@@ -29,7 +29,9 @@ jobs:
       - uses: jdx/mise-action@v4.2.0
         with:
           github_token: ${{ github.token }}
-      - run: mise exec -- yamllint -c template/.yamllint copier.yml .github/workflows/*.yml
+      # template/.yamllint reads .gitignore and .ignore from the working directory.
+      - run: mise exec -- yamllint -c .yamllint ../copier.yml ../.github/workflows/*.yml
+        working-directory: template
       - run: mise exec -- actionlint .github/workflows/*.yml
       - run: mise exec -- zizmor .github/workflows
       - run: git ls-files -z '*.py' | xargs -0 mise exec -- commentwall

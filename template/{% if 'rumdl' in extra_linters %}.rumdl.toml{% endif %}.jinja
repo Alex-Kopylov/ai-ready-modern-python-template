@@ -13,18 +13,13 @@ include = [
 ]
 # These exclusions are load-bearing. The root glob above reaches every
 # top-level document, so the entries below are what keep machine-consumed
-# files out of the linter. Do not delete them as unreachable -- they enforce
-# the policy set in commit 3db8a2e (AI agent working files are not lint
-# targets).
+# files out of the linter. Do not delete them as unreachable.
 exclude = [
-  # AI agent working files -- consumed by agents, not humans
+  # AI agent working files from .ignore: rumdl applies .ignore to
+  # directories only, so its file entries are repeated here
   "CLAUDE.md",
   "AGENTS.md",
   "GEMINI.md",
-  ".claude/**",
-  ".codex/**",
-  ".cursor/**",
-  ".gemini/**",
   # Legal text -- reformatting can break SPDX and license-scanner detection
   "LICENSE.md",
   # Vendored trees and build output

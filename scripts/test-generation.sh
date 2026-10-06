@@ -233,21 +233,28 @@ if mise run lint-python-fast; then
 fi
 git checkout -- src/my_project/main.py
 
-# Another branch's checkout under .claude/worktrees/ is not a lint target:
-# local tasks must agree with CI, and format must not rewrite it.
+# .ignore keeps every linter out of AI agent working files, including other
+# branches' checkouts under .claude/worktrees/, and format must not rewrite
+# them. .claude/hooks/ is not gitignored, so only .ignore covers it.
 branch_probe=.claude/worktrees/lint-probe
 git worktree add --quiet --detach "$branch_probe"
-printf 'echo $undefined_var\n' > "${branch_probe}/scripts/example.sh"
-printf 'key = [\n' > "${branch_probe}/broken.toml"
-printf 'a=1\n' > "${branch_probe}/unformatted.toml"
-printf '{\n' > "${branch_probe}/broken.json"
 printf 'import undeclared_dependency\n' \
   > "${branch_probe}/src/my_project/probe.py"
-mise run lint-fast || fail "lint-fast linted ${branch_probe}"
+for probe_dir in "$branch_probe" .claude/hooks; do
+  mkdir -p "$probe_dir"
+  printf 'echo $undefined_var\n' > "${probe_dir}/probe.sh"
+  printf 'key = [\n' > "${probe_dir}/broken.toml"
+  printf 'a=1\n' > "${probe_dir}/unformatted.toml"
+  printf '{\n' > "${probe_dir}/probe.json"
+  printf 'a: [\n' > "${probe_dir}/probe.yml"
+done
+mise run lint-fast || fail "lint-fast linted AI agent working files"
 mise run lint-deps || fail "lint-deps scanned ${branch_probe}"
 mise run format
-grep -Fxq 'a=1' "${branch_probe}/unformatted.toml" ||
-  fail "mise run format rewrote ${branch_probe}/unformatted.toml"
+for probe_dir in "$branch_probe" .claude/hooks; do
+  grep -Fxq 'a=1' "${probe_dir}/unformatted.toml" ||
+    fail "mise run format rewrote ${probe_dir}/unformatted.toml"
+done
 git worktree remove --force "$branch_probe"
 rm -r .claude
 
