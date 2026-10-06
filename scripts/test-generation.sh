@@ -146,13 +146,16 @@ printf \
   'ok -- uv and .venv use Python %s; mise provisions no Python\n' \
   "$uv_python_version"
 
-mise exec -- taplo fmt --check
+mise run lint-toml || fail "lint-toml rejected the fresh render"
 sed 's/^dependencies = \[\]$/dependencies=[]/' \
   pyproject.toml > pyproject.toml.tmp
 mv pyproject.toml.tmp pyproject.toml
 grep -Fxq 'dependencies=[]' pyproject.toml || {
   fail "expected an unformatted TOML fixture in pyproject.toml"
 }
+if mise run lint-toml; then
+  fail "lint-toml accepted an unformatted pyproject.toml"
+fi
 mise run format
 grep -Fxq 'dependencies = []' pyproject.toml || {
   fail "mise run format did not format pyproject.toml"
@@ -189,6 +192,13 @@ if [[ "$scenario" == github-actions-on ]]; then
   done
   mise run lint-gha-security ||
     fail "lint-gha-security must pass after removing workflow probes"
+
+  sed -i 's/package-ecosystem: "docker"/package-ecosystem: "invalid"/' \
+    .github/dependabot.yml
+  if mise run lint-github-actions; then
+    fail "lint-github-actions accepted an invalid .github/dependabot.yml"
+  fi
+  git checkout -- .github/dependabot.yml
 fi
 
 mise run lint-shell ||
@@ -209,6 +219,44 @@ git checkout -- scripts/example.sh
   fail "lint-shell probes did not restore an executable scripts/example.sh"
 git diff --quiet -- scripts/example.sh ||
   fail "lint-shell probes did not restore scripts/example.sh"
+
+# lint-json must cover every JSON file, not only the bundled configs.
+printf '{\n' > probe.json
+if mise run lint-json; then
+  fail "lint-json accepted an invalid probe.json"
+fi
+rm probe.json
+
+printf '\n\nPATTERN = "\\d+"\n' >> src/my_project/main.py
+if mise run lint-python-fast; then
+  fail "lint-python-fast accepted an invalid escape sequence (W605)"
+fi
+git checkout -- src/my_project/main.py
+
+# .ignore keeps every linter out of AI agent working files, including other
+# branches' checkouts under .claude/worktrees/, and format must not rewrite
+# them. .claude/hooks/ is not gitignored, so only .ignore covers it.
+branch_probe=.claude/worktrees/lint-probe
+git worktree add --quiet --detach "$branch_probe"
+printf 'import undeclared_dependency\n' \
+  > "${branch_probe}/src/my_project/probe.py"
+for probe_dir in "$branch_probe" .claude/hooks; do
+  mkdir -p "$probe_dir"
+  printf 'echo $undefined_var\n' > "${probe_dir}/probe.sh"
+  printf 'key = [\n' > "${probe_dir}/broken.toml"
+  printf 'a=1\n' > "${probe_dir}/unformatted.toml"
+  printf '{\n' > "${probe_dir}/probe.json"
+  printf 'a: [\n' > "${probe_dir}/probe.yml"
+done
+mise run lint-fast || fail "lint-fast linted AI agent working files"
+mise run lint-deps || fail "lint-deps scanned ${branch_probe}"
+mise run format
+for probe_dir in "$branch_probe" .claude/hooks; do
+  grep -Fxq 'a=1' "${probe_dir}/unformatted.toml" ||
+    fail "mise run format rewrote ${probe_dir}/unformatted.toml"
+done
+git worktree remove --force "$branch_probe"
+rm -r .claude
 
 printf '#bad heading\n\n\n\nx\n' > EXTRA.md
 if mise run lint-md; then
@@ -290,7 +338,7 @@ env PATH="$hook_path" git commit -m "test: exercise installed hooks"
 
 expected_uv_hook_count=8
 if [[ "$scenario" == github-actions-on ]]; then
-  expected_uv_hook_count=9
+  expected_uv_hook_count=10
 fi
 assert_not_matches \
   .pre-commit-config.yaml \

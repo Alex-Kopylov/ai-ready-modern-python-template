@@ -13,6 +13,7 @@ node = "26.10.0"
 "npm:jscpd" = "5.3.3"
 {% endif -%}
 "aqua:01mf02/jaq" = "3.1.1"
+"aqua:sharkdp/fd" = "10.5.0"
 "aqua:gitleaks/gitleaks" = "8.30.1"
 "aqua:hadolint/hadolint" = "2.15.1"
 "aqua:koalaman/shellcheck" = "0.11.0"
@@ -113,7 +114,10 @@ run = "mise exec -- hadolint Dockerfile"
 
 [tasks.lint-shell]
 description = "Lint shell scripts with ShellCheck"
-run = "find . -name '*.sh' -not -path './.venv/*' -not -path './node_modules/*' -exec mise exec -- shellcheck {} +"
+# fd discovers files the way ruff does: every file on disk, hidden ones
+# included, minus .git and anything matched by .gitignore or .ignore (such as
+# other branches' checkouts in .claude/worktrees/).
+run = "mise exec -- fd --hidden --exclude .git --type file --extension sh --print0 | xargs -0 -r mise exec -- shellcheck"
 
 {% if "rumdl" in extra_linters -%}
 [tasks.lint-md]
@@ -127,22 +131,24 @@ run = "uv run yamllint -c .yamllint ."
 
 [tasks.lint-json]
 description = "Validate JSON syntax with jaq"
-{% if "jscpd" in extra_linters -%}
-run = "mise exec -- jaq empty .jscpd.json"
-{% else -%}
-run = "find . -name '*.json' -not -path './.venv/*' -not -path './node_modules/*' -exec mise exec -- jaq empty {} +"
-{% endif %}
+# Same file discovery as lint-shell.
+run = "mise exec -- fd --hidden --exclude .git --type file --extension json --print0 | xargs -0 -r mise exec -- jaq empty"
 
 [tasks.lint-toml]
-description = "Lint TOML files with Taplo"
-run = "mise exec -- taplo lint"
+description = "Lint and format-check TOML files with Taplo"
+# Same file discovery as lint-shell; Taplo's own walk ignores .gitignore.
+run = [
+  "mise exec -- fd --hidden --exclude .git --type file --extension toml --print0 | xargs -0 -r mise exec -- taplo lint",
+  "mise exec -- fd --hidden --exclude .git --type file --extension toml --print0 | xargs -0 -r mise exec -- taplo fmt --check",
+]
 
 {% if use_github_actions -%}
 [tasks.lint-github-actions]
-description = "Lint GitHub Actions workflow files"
+description = "Lint GitHub Actions workflows and the Dependabot config"
 run = [
   "mise exec -- actionlint",
   "uv run check-jsonschema --builtin-schema github-workflows .github/workflows/*.yml",
+  "uv run check-jsonschema --builtin-schema vendor.dependabot .github/dependabot.yml",
 ]
 
 {% endif -%}
@@ -207,7 +213,7 @@ description = "Format and autofix Python and TOML files"
 run = [
   "uv run ruff format src tests",
   "uv run ruff check --fix src tests",
-  "mise exec -- taplo fmt",
+  "mise exec -- fd --hidden --exclude .git --type file --extension toml --print0 | xargs -0 -r mise exec -- taplo fmt",
   {% if "rumdl" in extra_linters %}
   "mise exec -- rumdl check --fix .",
   {% endif %}

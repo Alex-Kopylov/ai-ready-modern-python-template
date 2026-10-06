@@ -23,7 +23,7 @@
 default_stages: [pre-commit, pre-push]
 
 # AI agent working files are not lint targets (gitleaks still covers them
-# via always_run below)
+# via always_run below). Mirrors .ignore, which prek cannot read.
 exclude: ^(\.claude|\.codex|\.cursor|\.gemini)/|^(CLAUDE|AGENTS|GEMINI)\.md$
 
 repos:
@@ -126,6 +126,12 @@ repos:
         entry: mise exec -- uv run check-jsonschema --builtin-schema github-workflows
         language: system
         files: ^\.github/workflows/.*\.ya?ml$
+
+      - id: check-jsonschema-dependabot
+        name: check-jsonschema (Dependabot)
+        entry: mise exec -- uv run check-jsonschema --builtin-schema vendor.dependabot
+        language: system
+        files: ^\.github/dependabot\.ya?ml$
 
       - id: actionlint
         name: actionlint

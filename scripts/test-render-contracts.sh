@@ -379,6 +379,22 @@ printf '@AGENTS.md\n' | cmp --silent - "${default_dir}/CLAUDE.md" ||
 git -C "$default_dir" init --quiet
 assert_git_ignored "$default_dir" "CLAUDE.local.md"
 assert_git_ignored "$default_dir" ".claude/settings.local.json"
+assert_git_ignored "$default_dir" ".claude/worktrees/feature/src/module.py"
+
+# prek cannot read .ignore and rumdl applies it to directories only, so both
+# must repeat its entries.
+prek_exclude="$(sed -n 's/^exclude: //p' "${default_dir}/.pre-commit-config.yaml")"
+[[ -n "$prek_exclude" ]] || fail "missing prek global exclude"
+while IFS= read -r ignored; do
+  sample="${ignored#/}"
+  if [[ "$sample" == */ ]]; then
+    sample="${sample}probe"
+  else
+    assert_contains "${default_dir}/.rumdl.toml" "\"${sample}\","
+  fi
+  grep -Eq -- "$prek_exclude" <<<"$sample" ||
+    fail ".ignore entry ${ignored} is missing from the prek global exclude"
+done < <(grep -Ev '^(#|$)' "${default_dir}/.ignore")
 assert_git_not_ignored "$default_dir" ".claude/settings.json"
 assert_git_not_ignored "$default_dir" ".claude/commands/review.md"
 
@@ -459,10 +475,6 @@ expected_rumdl_excludes="$(printf '%s\n' \
   CLAUDE.md \
   AGENTS.md \
   GEMINI.md \
-  '.claude/**' \
-  '.codex/**' \
-  '.cursor/**' \
-  '.gemini/**' \
   LICENSE.md \
   '.venv/**' \
   'goals/**' \
@@ -533,7 +545,7 @@ assert_contains "${default_dir}/mise.toml" '[tasks.lint-dockerfile]'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-shell]'
 assert_contains \
   "${default_dir}/mise.toml" \
-  '-exec mise exec -- shellcheck {} +'
+  '--extension sh --print0 | xargs -0 -r mise exec -- shellcheck'
 assert_not_contains "${default_dir}/mise.toml" 'shellcheck scripts/*.sh'
 assert_contains "${default_dir}/mise.toml" '    "lint-shell",'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: hadolint'
@@ -559,6 +571,9 @@ assert_contains \
 assert_contains \
   "${default_dir}/.pre-commit-config.yaml" \
   '      - id: check-jsonschema-github-workflows'
+assert_contains \
+  "${default_dir}/.pre-commit-config.yaml" \
+  '      - id: check-jsonschema-dependabot'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: actionlint'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: zizmor'
 assert_contains "${default_dir}/.github/dependabot.yml" 'package-ecosystem: "docker"'
