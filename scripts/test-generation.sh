@@ -208,10 +208,10 @@ if mise run lint-shell; then
   fail "lint-shell must reject a deliberate ShellCheck violation"
 fi
 git checkout -- scripts/example.sh
-git rm --quiet scripts/example.sh
+rm scripts/example.sh
 mise run lint-shell ||
   fail "lint-shell must succeed when no shell scripts exist"
-git checkout HEAD -- scripts/example.sh
+git checkout -- scripts/example.sh
 # Scope the residue check to the probe target. The tree already carries
 # unrelated churn at this point (uv.lock, .venv) from the earlier install steps,
 # so a whole-tree `git status` check would be a false positive.
