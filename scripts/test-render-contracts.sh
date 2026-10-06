@@ -379,6 +379,7 @@ printf '@AGENTS.md\n' | cmp --silent - "${default_dir}/CLAUDE.md" ||
 git -C "$default_dir" init --quiet
 assert_git_ignored "$default_dir" "CLAUDE.local.md"
 assert_git_ignored "$default_dir" ".claude/settings.local.json"
+assert_git_ignored "$default_dir" ".claude/worktrees/feature/src/module.py"
 assert_git_not_ignored "$default_dir" ".claude/settings.json"
 assert_git_not_ignored "$default_dir" ".claude/commands/review.md"
 
@@ -533,7 +534,7 @@ assert_contains "${default_dir}/mise.toml" '[tasks.lint-dockerfile]'
 assert_contains "${default_dir}/mise.toml" '[tasks.lint-shell]'
 assert_contains \
   "${default_dir}/mise.toml" \
-  '-exec mise exec -- shellcheck {} +'
+  '| xargs -0 -r mise exec -- shellcheck'
 assert_not_contains "${default_dir}/mise.toml" 'shellcheck scripts/*.sh'
 assert_contains "${default_dir}/mise.toml" '    "lint-shell",'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: hadolint'
@@ -559,6 +560,9 @@ assert_contains \
 assert_contains \
   "${default_dir}/.pre-commit-config.yaml" \
   '      - id: check-jsonschema-github-workflows'
+assert_contains \
+  "${default_dir}/.pre-commit-config.yaml" \
+  '      - id: check-jsonschema-dependabot'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: actionlint'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: zizmor'
 assert_contains "${default_dir}/.github/dependabot.yml" 'package-ecosystem: "docker"'

@@ -4,8 +4,18 @@
 # Include all TOML files in project
 include = ["**/*.toml"]
 
-# Exclude common directories
-exclude = ["**/node_modules/**", "**/target/**", "**/.venv/**"]
+# Exclude common directories. Taplo ignores .gitignore, so the AI agent
+# directories from the prek global exclude are listed too: they can hold other
+# branches' worktrees, which lint-toml and `mise run format` must not touch.
+exclude = [
+  "**/node_modules/**",
+  "**/target/**",
+  "**/.venv/**",
+  "**/.claude/**",
+  "**/.codex/**",
+  "**/.cursor/**",
+  "**/.gemini/**",
+]
 
 [formatting]
 # The two array options below are load-bearing: removing either makes a fresh

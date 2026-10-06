@@ -184,8 +184,9 @@ the coverage gate; zero omits the active `fail_under` setting.
 
 Every generated project includes a `CLAUDE.md` bridge containing only
 `@AGENTS.md`, while `.gitignore` reserves `CLAUDE.local.md` and
-`.claude/settings.local.json` for local-only configuration without ignoring
-shared `.claude` assets. The `mise run verify` task runs `uv build`, the
+`.claude/settings.local.json` for local-only configuration and
+`.claude/worktrees/` for Claude Code's checkouts of other branches, without
+ignoring shared `.claude` assets. The `mise run verify` task runs `uv build`, the
 canonical `lint` task, and the coverage test task in that exact order; `lint`
 delegates to the existing full lint gate.
 

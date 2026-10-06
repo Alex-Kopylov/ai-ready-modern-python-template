@@ -113,7 +113,9 @@ run = "mise exec -- hadolint Dockerfile"
 
 [tasks.lint-shell]
 description = "Lint shell scripts with ShellCheck"
-run = "find . -name '*.sh' -not -path './.venv/*' -not -path './node_modules/*' -exec mise exec -- shellcheck {} +"
+# git ls-files, not find: skips gitignored paths and nested checkouts of other
+# branches (e.g. .claude/worktrees/), which CI never sees.
+run = "git ls-files -z --cached --others --exclude-standard -- '*.sh' | xargs -0 -r mise exec -- shellcheck"
 
 {% if "rumdl" in extra_linters -%}
 [tasks.lint-md]
@@ -127,22 +129,23 @@ run = "uv run yamllint -c .yamllint ."
 
 [tasks.lint-json]
 description = "Validate JSON syntax with jaq"
-{% if "jscpd" in extra_linters -%}
-run = "mise exec -- jaq empty .jscpd.json"
-{% else -%}
-run = "find . -name '*.json' -not -path './.venv/*' -not -path './node_modules/*' -exec mise exec -- jaq empty {} +"
-{% endif %}
+# Same file selection as lint-shell.
+run = "git ls-files -z --cached --others --exclude-standard -- '*.json' | xargs -0 -r mise exec -- jaq empty"
 
 [tasks.lint-toml]
-description = "Lint TOML files with Taplo"
-run = "mise exec -- taplo lint"
+description = "Lint and format-check TOML files with Taplo"
+run = [
+  "mise exec -- taplo lint",
+  "mise exec -- taplo fmt --check",
+]
 
 {% if use_github_actions -%}
 [tasks.lint-github-actions]
-description = "Lint GitHub Actions workflow files"
+description = "Lint GitHub Actions workflows and the Dependabot config"
 run = [
   "mise exec -- actionlint",
   "uv run check-jsonschema --builtin-schema github-workflows .github/workflows/*.yml",
+  "uv run check-jsonschema --builtin-schema vendor.dependabot .github/dependabot.yml",
 ]
 
 {% endif -%}
