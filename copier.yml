@@ -203,11 +203,13 @@ python_version_minor:
 
 python_version_pin:
   type: str
-  # Exact patches pass through verbatim. Supported minors map to fresh managed
-  # builds verified with pinned uv 0.11.27; any other minor passes through.
+  # Exact patches pass through verbatim. Supported minors map to managed
+  # builds the uv pinned in template/mise.toml.jinja (and the matching
+  # Dockerfile image) installs; refresh them from `uv python list
+  # --only-downloads`. Any other minor passes through.
   default: >-
     {{ {
-      '3.10': '3.10.20', '3.11': '3.11.15', '3.12': '3.12.13',
-      '3.13': '3.13.14', '3.14': '3.14.6',
+      '3.10': '3.10.22', '3.11': '3.11.17', '3.12': '3.12.15',
+      '3.13': '3.13.16', '3.14': '3.14.8',
     }.get(python_version, python_version) }}
   when: false
