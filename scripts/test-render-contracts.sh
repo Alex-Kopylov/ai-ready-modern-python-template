@@ -372,9 +372,9 @@ printf 'ok -- wizard exposes only the supported choices\n'
 default_dir="${tmp_dir}/default"
 render_project "$default_dir"
 
-assert_file_present "${default_dir}/CLAUDE.md"
-printf '@AGENTS.md\n' | cmp --silent - "${default_dir}/CLAUDE.md" ||
-  fail "CLAUDE.md must contain only @AGENTS.md followed by a newline"
+for agent_doc in README.md AGENTS.md CLAUDE.md; do
+  assert_path_absent "${default_dir}/${agent_doc}"
+done
 
 git -C "$default_dir" init --quiet
 assert_git_ignored "$default_dir" "CLAUDE.local.md"
@@ -425,38 +425,7 @@ expected_verify_task="$(printf '%s\n' \
     "$verify_task" >&2
   fail "verify task must run build, full lint, and coverage tests in order"
 }
-assert_contains "${default_dir}/AGENTS.md" \
-  '`mise run verify`: build, run the full lint gate, and run coverage tests.'
-assert_contains "${default_dir}/README.md" \
-  '`mise run verify`: build, run the full lint gate, and run coverage tests.'
-
-quick_start_commands="$(
-  awk '
-    $0 == "## Quick Start" {
-      in_section = 1
-      next
-    }
-    in_section && $0 == "```bash" {
-      in_block = 1
-      next
-    }
-    in_block && $0 == "```" {
-      exit
-    }
-    in_block {
-      print
-    }
-  ' "${default_dir}/README.md"
-)"
-expected_quick_start_commands="$(printf '%s\n' \
-  'mise install' \
-  'mise run install' \
-  'mise run install-hooks' \
-  'mise run verify')"
-[[ "$quick_start_commands" == "$expected_quick_start_commands" ]] ||
-  fail "generated README Quick Start must end with mise run verify"
-
-printf 'ok -- agent bridge, local ignores, and verify task form the baseline\n'
+printf 'ok -- no agent docs, local ignores, and verify task form the baseline\n'
 
 rumdl_config="${default_dir}/.rumdl.toml"
 rumdl_includes="$(rumdl_global_entries "$rumdl_config" include)"
@@ -549,7 +518,6 @@ assert_contains \
 assert_not_contains "${default_dir}/mise.toml" 'shellcheck scripts/*.sh'
 assert_contains "${default_dir}/mise.toml" '    "lint-shell",'
 assert_contains "${default_dir}/.pre-commit-config.yaml" '      - id: hadolint'
-assert_contains "${default_dir}/README.md" '## Docker'
 
 printf 'ok -- Docker and Hadolint are part of every default render\n'
 
@@ -623,7 +591,6 @@ for automation_term in actionlint zizmor check-jsonschema; do
   assert_not_contains "${github_off_dir}/mise.toml" "$automation_term"
   assert_not_contains "${github_off_dir}/.pre-commit-config.yaml" "$automation_term"
 done
-assert_not_contains "${github_off_dir}/README.md" '## CI'
 assert_not_contains "${github_off_dir}/.dockerignore" '.github/'
 assert_not_contains "${github_off_dir}/.rumdl.toml" '.github/'
 github_off_rumdl_includes="$(
@@ -668,8 +635,8 @@ done
 printf 'ok -- every SPDX license renders LICENSE and metadata\n'
 
 author_dir="${tmp_dir}/named-author"
-render_project "$author_dir" --data 'author_name=Ada Lovelace'
-assert_contains "${author_dir}/LICENSE" 'Copyright (c) 2026 Ada Lovelace'
+render_project_with_tasks "$author_dir" --data 'author_name=Ada Lovelace'
+assert_contains "${author_dir}/LICENSE" "Copyright (c) $(date +%Y) Ada Lovelace"
 assert_contains "${author_dir}/Dockerfile" 'LABEL maintainer="Ada Lovelace"'
 
 printf 'ok -- author metadata reaches MIT and Docker outputs\n'

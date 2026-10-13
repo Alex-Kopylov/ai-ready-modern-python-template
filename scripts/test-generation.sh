@@ -270,12 +270,10 @@ mise run lint-md ||
   fail "rumdl did not ignore .claude/probe.md"
 rm -rf .claude
 
-agents_backup="${tmp_dir}/AGENTS.md.probe-backup"
-cp AGENTS.md "$agents_backup"
 printf '#bad heading\n\n\n\nx\n' > AGENTS.md
 mise run lint-md ||
   fail "rumdl did not ignore root AGENTS.md"
-cp "$agents_backup" AGENTS.md
+rm AGENTS.md
 
 mkdir -p docs/specs
 printf '#bad heading\n\n\n\nx\n' > docs/specs/probe.md
@@ -296,12 +294,10 @@ rm -rf docs/specs
 # Scope the residue check to the probe artefacts. The tree already carries
 # unrelated churn at this point (uv.lock, .venv) from the earlier install steps,
 # so a whole-tree `git status` check would be a false positive.
-for probe in EXTRA.md .claude docs/specs; do
+for probe in EXTRA.md .claude AGENTS.md docs/specs; do
   [[ ! -e "$probe" ]] ||
     fail "rumdl probe left ${probe} behind in the generated project"
 done
-git diff --quiet -- AGENTS.md ||
-  fail "rumdl probe did not restore AGENTS.md"
 
 mise run test
 

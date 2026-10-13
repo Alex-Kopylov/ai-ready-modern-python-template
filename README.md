@@ -21,7 +21,7 @@ The wizard keeps project-shape choices small and explicit:
 | Question | Default | Purpose |
 | --- | --- | --- |
 | `project_name` | `my_project` | Project, distribution, and Python package name |
-| `project_description` | `Project description` | README and package metadata |
+| `project_description` | `Project description` | Package metadata |
 | `main_branch_name` | `main` | Git setup guidance and generated CI push branch |
 | `python_version` | `3.14` | Python, uv, Ruff, ty, and Docker |
 | `license` | `MIT` | MIT (default), UNLICENSED, 27 other popular SPDX licenses, or Skip |

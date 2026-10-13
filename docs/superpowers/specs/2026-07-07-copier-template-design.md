@@ -41,9 +41,6 @@ repo root/
     ├── pyproject.toml.jinja
     ├── mise.toml.jinja
     ├── .pre-commit-config.yaml.jinja
-    ├── README.md.jinja
-    ├── AGENTS.md.jinja
-    ├── CLAUDE.md
     ├── Dockerfile.jinja
     ├── .dockerignore.jinja
     ├── .hadolint.yaml.jinja
@@ -133,8 +130,7 @@ License behavior remains:
 
 Every project receives `Dockerfile`, `.dockerignore`, and `.hadolint.yaml`.
 Hadolint is always pinned in `mise.toml`, represented by `lint-dockerfile`, and
-installed as a prek hook. The generated README always documents the Docker
-build command.
+installed as a prek hook.
 
 The Dockerfile:
 
@@ -182,8 +178,8 @@ and leaves no dangling task references.
 `coverage_fail_under` accepts integers from 0 through 100. Positive values emit
 the coverage gate; zero omits the active `fail_under` setting.
 
-Every generated project includes a `CLAUDE.md` bridge containing only
-`@AGENTS.md`, while `.gitignore` reserves `CLAUDE.local.md` and
+Generated projects ship no `README.md`, `AGENTS.md`, or `CLAUDE.md`;
+`.gitignore` reserves `CLAUDE.local.md` and
 `.claude/settings.local.json` for local-only configuration and
 `.claude/worktrees/` for Claude Code's checkouts of other branches, without
 ignoring shared `.claude` assets. The `mise run verify` task runs `uv build`, the
@@ -231,8 +227,7 @@ six full gates.
 ### Documentation
 
 The root README explains generation, the compact wizard, updates, adoption, and
-the validation commands. Generated documentation describes the project,
-its always-available Docker path, and only the automation that was rendered.
+the validation commands. Generated projects carry no documentation files.
 
 ## Part 2 — `sample_db` adoption
 

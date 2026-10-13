@@ -67,7 +67,7 @@ project_name:
 
 project_description:
   type: str
-  help: Short project description for README and package metadata.
+  help: Short project description for package metadata.
   default: Project description
 
 main_branch_name:
