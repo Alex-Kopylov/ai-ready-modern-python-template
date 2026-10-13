@@ -11,7 +11,7 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 project_dir="${tmp_dir}/project"
 
-mise exec -- copier copy --quiet --defaults --vcs-ref=HEAD "$repo_root" "$project_dir"
+mise exec -- copier copy --quiet --defaults --vcs-ref=HEAD --skip-tasks "$repo_root" "$project_dir"
 # Install the current pins first: npm tools resolve their node dependency from
 # the installed toolset, so a fresh runner fails when node bumps too.
 (cd "$project_dir" && mise trust --quiet && mise install && mise upgrade --bump --local)
