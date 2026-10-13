@@ -49,7 +49,6 @@ repo root/
     ├── tests/unit/{{ project_name }}/
     ├── tests/integration/
     ├── conditional GitHub automation
-    ├── conditional LICENSE
     └── conditional optional-linter configuration
 ```
 
@@ -92,8 +91,9 @@ keywords that satisfy the unified distribution-name shape.
 
 `main_branch_name` is recorded in `.copier-answers.yml`, used by post-copy
 `git init -b` guidance, and rendered into the CI push filter. Generation stays
-side-effect-free: there are no Copier tasks that initialize or rename Git, so
-`copier update` never reconfigures an existing repository.
+free of Git side effects: no Copier task initializes or renames Git (the only
+task downloads `LICENSE` on copy), so `copier update` never reconfigures an
+existing repository.
 
 Hidden `python_version_minor` supplies metadata, Ruff, and ty. Hidden
 `python_version_pin` preserves exact patch answers and maps supported minor
@@ -118,12 +118,13 @@ Hatchling discovers `src/{{ project_name }}` because the distribution and import
 package use the same name. There is no explicit wheel-package table. Pytest does
 not inject `src` onto `sys.path`, so the suite exercises the installed project.
 
-License behavior remains:
+License behavior:
 
-- MIT creates `LICENSE` and `project.license = "MIT"`; the holder is
-  `author_name` or falls back to `project_name`.
-- Every other SPDX choice creates `LICENSE` from `template/_licenses/<id>.txt`
-  and sets `project.license` to that id. Choices are ordered by GitHub
+- Every SPDX choice sets `project.license` to that id, and a copy-only Copier
+  task downloads `LICENSE` from `https://api.github.com/licenses/<id>`,
+  replacing `[year]` with the current year and `[fullname]` with
+  `author_name` or `project_name`. The repository vendors no license texts;
+  the task makes Copier require `--trust`. Choices are ordered by GitHub
   popularity after MIT and UNLICENSED.
 - UNLICENSED creates no file and uses `LicenseRef-Proprietary` metadata.
 - Skip creates no file and emits no project license metadata.

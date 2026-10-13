@@ -74,9 +74,11 @@ assert_match_count() {
 printf 'Generating scenario: %s\n' "$scenario"
 # --vcs-ref=HEAD selects the current local revision instead of Copier's
 # default latest-tag resolution; Copier also snapshots dirty local changes.
+# --trust runs the task that downloads LICENSE, as a real user's copy would.
 mise exec -- copier copy \
   --defaults \
   --vcs-ref=HEAD \
+  --trust \
   "${copier_args[@]}" \
   "$repo_root" \
   "$generated_dir"

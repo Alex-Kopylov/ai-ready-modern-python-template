@@ -8,8 +8,12 @@ complete bundle.
 ## Generate a Project
 
 ```bash
-uvx copier copy gh:Alex-Kopylov/ai-ready-modern-python-template my-project
+uvx copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template my-project
 ```
+
+`--trust` lets Copier run the template's one task: it downloads the chosen
+license text from the GitHub licenses API into `LICENSE`, so generation needs
+network access.
 
 Copier resolves the latest stable Git tag by default. Use a local checkout or
 pass an explicit VCS ref only when testing unreleased template changes.
@@ -82,7 +86,7 @@ when the project is first synced.
 From the generated project:
 
 ```bash
-uvx copier update
+uvx copier update --trust
 ```
 
 Review the diff before committing. Copier uses `.copier-answers.yml` to replay
@@ -93,7 +97,7 @@ the original answers and merge template changes.
 From the existing project root:
 
 ```bash
-uvx copier copy gh:Alex-Kopylov/ai-ready-modern-python-template .
+uvx copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template .
 git diff
 ```
 

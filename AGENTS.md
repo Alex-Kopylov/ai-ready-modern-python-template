@@ -111,5 +111,5 @@ minor for new questions or features; patch for fixes. Once CI is green on
 `main`, tag and publish in one step with
 `gh release create vX.Y.Z --target <main-sha> --generate-notes`, then
 smoke-test
-`uvx copier copy gh:Alex-Kopylov/ai-ready-modern-python-template my-project` so
+`uvx copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template my-project` so
 the default Copier command resolves to the new stable version.

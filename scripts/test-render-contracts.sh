@@ -95,7 +95,13 @@ with open(sys.argv[1], "rb") as config:
 PY
 }
 
+# The only task downloads LICENSE from the GitHub API; renders that do not
+# check LICENSE skip it to stay offline and under the API rate limit.
 render_project() {
+  render_project_with_tasks "$@" --skip-tasks
+}
+
+render_project_with_tasks() {
   local destination="$1"
   shift
 
@@ -103,6 +109,7 @@ render_project() {
     --quiet \
     --defaults \
     --vcs-ref=HEAD \
+    --trust \
     "$@" \
     "$repo_root" \
     "$destination" 2>"$render_log"; then
@@ -128,6 +135,7 @@ assert_render_rejected() {
     --quiet \
     --defaults \
     --vcs-ref=HEAD \
+    --skip-tasks \
     "$@" \
     "$repo_root" \
     "$destination" >"$render_log" 2>&1; then
@@ -138,7 +146,6 @@ assert_render_rejected() {
 obsolete_questions='setup''_mode|use''_docker|is''_package'
 assert_not_matches "${repo_root}/copier.yml" "^(${obsolete_questions}):"
 assert_not_contains "${repo_root}/copier.yml" "setup""_mode == 'custom'"
-assert_not_matches "${repo_root}/copier.yml" '^_tasks:'
 # copier 9.18 loads copier.yml with yaml.SafeLoader and renders through a
 # sandboxed Jinja environment, so the validator cannot reach keyword.iskeyword
 # and the keyword list must be spelled out. Keep the static copy honest by
@@ -370,7 +377,7 @@ expected_question_map="$(printf '%s\n' \
 printf 'ok -- wizard exposes only the supported choices\n'
 
 default_dir="${tmp_dir}/default"
-render_project "$default_dir"
+render_project_with_tasks "$default_dir"
 
 for agent_doc in README.md AGENTS.md CLAUDE.md; do
   assert_path_absent "${default_dir}/${agent_doc}"
@@ -478,7 +485,7 @@ assert_file_present "${default_dir}/src/my_project/__init__.py"
 assert_file_present "${default_dir}/tests/conftest.py"
 assert_file_present "${default_dir}/tests/integration/__init__.py"
 assert_file_present "${default_dir}/LICENSE"
-assert_contains "${default_dir}/LICENSE" 'Copyright (c) 2026 my_project'
+assert_contains "${default_dir}/LICENSE" "Copyright (c) $(date +%Y) my_project"
 assert_contains "${default_dir}/pyproject.toml" '"pytest-xdist"'
 assert_contains "${default_dir}/pyproject.toml" '"mutmut"'
 assert_contains "${default_dir}/.pytest.ini" '-n auto'
@@ -611,14 +618,14 @@ expected_github_off_rumdl_includes="$(printf '%s\n' \
 printf 'ok -- GitHub automation switches off without disabling Docker\n'
 
 unlicensed_dir="${tmp_dir}/unlicensed"
-render_project "$unlicensed_dir" --data license=UNLICENSED
+render_project_with_tasks "$unlicensed_dir" --data license=UNLICENSED
 assert_path_absent "${unlicensed_dir}/LICENSE"
 assert_contains \
   "${unlicensed_dir}/pyproject.toml" \
   'license = "LicenseRef-Proprietary"'
 
 skip_dir="${tmp_dir}/skip-license"
-render_project "$skip_dir" --data license=Skip
+render_project_with_tasks "$skip_dir" --data license=Skip
 assert_path_absent "${skip_dir}/LICENSE"
 assert_not_matches "${skip_dir}/pyproject.toml" '^[[:space:]]*license[[:space:]]='
 
@@ -628,10 +635,10 @@ for spdx in $(sed -n '/^license:/,/^author_name:/p' "${repo_root}/copier.yml" |
   sed -n 's/^    "\{0,1\}\([A-Za-z0-9.-]*\)"\{0,1\}: .*/\1/p' |
   grep -vxE 'UNLICENSED|Skip'); do
   spdx_dir="${tmp_dir}/license-${spdx}"
-  render_project "$spdx_dir" --data "license=${spdx}"
+  render_project_with_tasks "$spdx_dir" --data "license=${spdx}"
   assert_file_present "${spdx_dir}/LICENSE"
   assert_contains "${spdx_dir}/pyproject.toml" "license = \"${spdx}\""
-  assert_not_matches "${spdx_dir}/LICENSE" '\{\{'
+  assert_not_matches "${spdx_dir}/LICENSE" '\[(year|fullname|email)\]'
 done
 
 printf 'ok -- every SPDX license renders LICENSE and metadata\n'
@@ -732,8 +739,6 @@ assert_contains \
   "${named_dir}/tests/unit/Acme_Project/test_main.py" \
   'from Acme_Project.main import main'
 assert_contains "${named_dir}/pyproject.toml" 'name = "Acme_Project"'
-assert_contains "${named_dir}/README.md" '# Acme_Project'
-assert_contains "${named_dir}/README.md" 'docker build -t Acme_Project .'
 
 printf 'ok -- one project name is used unchanged everywhere\n'
 

@@ -1,18 +1,6 @@
 _subdirectory: template
 _answers_file: .copier-answers.yml
-_min_copier_version: "9.1.0"
-
-# License texts are included by LICENSE.jinja, never rendered on their own.
-# Setting _exclude replaces copier's defaults, so they are repeated.
-_exclude:
-  - copier.yml
-  - "~*"
-  - "*.py[co]"
-  - __pycache__
-  - .git
-  - .DS_Store
-  - .svn
-  - _licenses
+_min_copier_version: "9.6.0"
 
 # Explicit jinja whitespace behavior: copier's defaults changed across
 # releases (9.16 stopped trimming block-tag lines), which silently broke
@@ -22,6 +10,30 @@ _envops:
   trim_blocks: true
   lstrip_blocks: true
   keep_trailing_newline: true
+
+# Downloads the chosen license text from the GitHub licenses API, so the
+# template vendors no license files. Copy only: an update must not rewrite the
+# copyright year. Tasks make Copier require --trust. GITHUB_TOKEN, when set,
+# lifts the anonymous 60 requests/hour limit that test renders would exhaust.
+_tasks:
+  - command:
+      - "{{ _copier_python }}"
+      - -c
+      - |
+        import json, os, sys, time, urllib.request
+
+        spdx_id, holder = sys.argv[1:]
+        request = urllib.request.Request(f"https://api.github.com/licenses/{spdx_id.lower()}")
+        if token := os.environ.get("GITHUB_TOKEN"):
+            request.add_header("Authorization", f"Bearer {token}")
+        with urllib.request.urlopen(request, timeout=30) as response:
+            body = json.load(response)["body"]
+        body = body.replace("[year]", time.strftime("%Y")).replace("[fullname]", holder)
+        with open("LICENSE", "w", encoding="utf-8") as license_file:
+            license_file.write(body.replace(" ([email])", "").rstrip() + "\n")
+      - "{{ license }}"
+      - "{{ author_name or project_name }}"
+    when: "{{ _copier_operation == 'copy' and license not in ['UNLICENSED', 'Skip'] }}"
 
 _message_after_copy: |
   Next steps:
