@@ -475,6 +475,8 @@ assert_file_present "${default_dir}/scripts/example.sh"
   fail "expected executable file: ${default_dir}/scripts/example.sh"
 assert_contains "${default_dir}/mise.toml" 'run = "uv sync --all-extras"'
 assert_file_present "${default_dir}/src/my_project/__init__.py"
+assert_file_present "${default_dir}/tests/conftest.py"
+assert_file_present "${default_dir}/tests/integration/__init__.py"
 assert_file_present "${default_dir}/LICENSE"
 assert_contains "${default_dir}/LICENSE" 'Copyright (c) 2026 my_project'
 assert_contains "${default_dir}/pyproject.toml" '"pytest-xdist"'

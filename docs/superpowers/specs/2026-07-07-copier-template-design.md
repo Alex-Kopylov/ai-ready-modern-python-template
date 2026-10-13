@@ -45,7 +45,9 @@ repo root/
     ├── .dockerignore.jinja
     ├── .hadolint.yaml.jinja
     ├── src/{{ project_name }}/
+    ├── tests/conftest.py
     ├── tests/unit/{{ project_name }}/
+    ├── tests/integration/
     ├── conditional GitHub automation
     ├── conditional LICENSE
     └── conditional optional-linter configuration
