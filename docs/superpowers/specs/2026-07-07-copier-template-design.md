@@ -73,8 +73,9 @@ The visible questions are:
 | `project_description` | string | `Project description` | README and metadata |
 | `main_branch_name` | string | `main` | Git setup guidance and CI push branch |
 | `python_version` | string | `3.14` | Python, uv, Ruff, ty, and Docker |
+| `build_backend` | choice | `uv_build` | PEP 517 backend: `uv_build` or `hatchling` |
 | `license` | choice | `MIT` | MIT (default), UNLICENSED, 27 other popular SPDX licenses, or Skip |
-| `author_name` | string | empty | License owner and optional Docker maintainer |
+| `author_name` | string | git user name, else OS user, else empty | License owner and optional Docker maintainer |
 | `use_github_actions` | boolean | `true` | Complete GitHub automation bundle |
 | `extra_linters` | multiselect | all | jscpd, typos, rumdl, and commentwall |
 | `parallel_testing` | boolean | `true` | Parallel pytest via pytest-xdist; false uses serial pytest |
@@ -106,17 +107,31 @@ for language-independent CLI tools.
 
 ### Packaging
 
-Every generated `pyproject.toml` contains:
+`build_backend` selects the `[build-system]` table. The default is uv's own
+backend, with its version range following the template uv pin so `uv build`
+and the Docker image use the uv binary itself instead of downloading
+`uv_build`:
 
 ```toml
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "{{ project_name }}"
 ```
 
-Hatchling discovers `src/{{ project_name }}` because the distribution and import
-package use the same name. There is no explicit wheel-package table. Pytest does
-not inject `src` onto `sys.path`, so the suite exercises the installed project.
+`module-name` is explicit because uv_build lowercases the default module name
+while `project_name` is used unchanged. `hatchling` renders
+`requires = ["hatchling"]` and `build-backend = "hatchling.build"`; Hatchling
+discovers `src/{{ project_name }}` because the distribution and import package
+use the same name, so there is no explicit wheel-package table. Pytest does not
+inject `src` onto `sys.path`, so the suite exercises the installed project.
+
+`author_name` defaults through a `copier-template-extensions` context hook in
+`extensions/author_name.py`: `git config user.name`, then the OS user name,
+then empty. The package must be installed next to Copier
+(`uvx --with copier-template-extensions copier ...`).
 
 License behavior:
 

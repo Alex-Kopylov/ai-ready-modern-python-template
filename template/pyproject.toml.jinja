@@ -44,11 +44,24 @@ dev = [
 ]
 
 [build-system]
+{% if build_backend == 'uv_build' -%}
+# The range follows the uv pin in mise.toml so `uv build` uses uv's built-in
+# backend without downloading uv_build; scripts/bump-template-pins.sh bumps it.
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
+{% else -%}
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+{% endif %}
 
 [tool.uv]
 python-preference = "only-managed"
+{% if build_backend == 'uv_build' %}
+
+[tool.uv.build-backend]
+# uv_build lowercases the default module name; project_name is used unchanged.
+module-name = "{{ project_name }}"
+{% endif %}
 
 [tool.ty.environment]
 python-version = "{{ python_version_minor }}"

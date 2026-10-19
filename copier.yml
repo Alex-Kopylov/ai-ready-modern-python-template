@@ -11,6 +11,13 @@ _envops:
   lstrip_blocks: true
   keep_trailing_newline: true
 
+# author_name defaults to the git user name, so Copier needs the
+# copier-template-extensions package (see the README install command). The
+# loader imports extensions/ from the template clone, outside _subdirectory.
+_jinja_extensions:
+  - copier_template_extensions.TemplateExtensionLoader
+  - extensions/author_name.py:DefaultAuthorName
+
 # Downloads the chosen license text from the GitHub licenses API, so the
 # template vendors no license files. Copy only: an update must not rewrite the
 # copyright year. Tasks make Copier require --trust. GITHUB_TOKEN, when set,
@@ -114,6 +121,17 @@ python_version:
     3.10 is the oldest version supported by the dev toolchain
     {% endif %}
 
+build_backend:
+  type: str
+  help: >-
+    PEP 517 build backend. uv_build is uv's own backend: fast, no third-party
+    build dependency, and the uv that writes uv.lock also builds the wheel.
+    Hatchling adds plugins and dynamic metadata.
+  choices:
+    uv_build: uv_build
+    Hatchling: hatchling
+  default: uv_build
+
 license:
   type: str
   help: Project license, ranked by GitHub popularity; choose Skip to define it after generation.
@@ -152,8 +170,10 @@ license:
 
 author_name:
   type: str
-  help: Copyright holder and optional Docker maintainer label.
-  default: ""
+  help: >-
+    Copyright holder and optional Docker maintainer label. Defaults to the git
+    user name, then the OS user name.
+  default: "{{ default_author_name }}"
 
 use_github_actions:
   type: bool
