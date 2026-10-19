@@ -136,6 +136,7 @@ assert_render_rejected() {
     --defaults \
     --vcs-ref=HEAD \
     --skip-tasks \
+    --trust \
     "$@" \
     "$repo_root" \
     "$destination" >"$render_log" 2>&1; then
@@ -247,14 +248,14 @@ generation_matrix_row_count="$(
     END { print row_count + 0 }
   ' "${repo_root}/.github/workflows/ci.yml"
 )"
-[[ "$generation_matrix_row_count" == 6 ]] ||
-  fail "expected exactly six full-generation rows, found ${generation_matrix_row_count}"
+[[ "$generation_matrix_row_count" == 7 ]] ||
+  fail "expected exactly seven full-generation rows, found ${generation_matrix_row_count}"
 
 generation_matrix="$(
   awk '
     function emit_row() {
       if (in_row) {
-        print label "|" scenario "|" version
+        print label "|" scenario "|" version "|" backend
       }
     }
 
@@ -271,6 +272,7 @@ generation_matrix="$(
       label = "<missing label>"
       scenario = "<missing scenario>"
       version = "<missing python_version>"
+      backend = ""
 
       if (/^          - label: /) {
         label = $0
@@ -292,6 +294,11 @@ generation_matrix="$(
       version = $0
       sub(/^            python_version: /, "", version)
       gsub(/^"|"$/, "", version)
+      next
+    }
+    /^            build_backend: / {
+      backend = $0
+      sub(/^            build_backend: /, "", backend)
     }
     END {
       if (in_include) {
@@ -301,12 +308,13 @@ generation_matrix="$(
   ' "${repo_root}/.github/workflows/ci.yml"
 )"
 expected_generation_matrix="$(printf '%s\n' \
-  'github-actions-on / default Python|github-actions-on|' \
-  'github-actions-off / default Python|github-actions-off|' \
-  'github-actions-off / Python 3.11.9 exact|github-actions-off|3.11.9' \
-  'github-actions-off / Python 3.10 minor|github-actions-off|3.10' \
-  'github-actions-on / Python 3.12 minor|github-actions-on|3.12' \
-  'github-actions-on / Python 3.13 minor|github-actions-on|3.13')"
+  'github-actions-on / default Python|github-actions-on||' \
+  'github-actions-off / default Python|github-actions-off||' \
+  'github-actions-off / Python 3.11.9 exact|github-actions-off|3.11.9|' \
+  'github-actions-off / Python 3.10 minor|github-actions-off|3.10|' \
+  'github-actions-on / Python 3.12 minor|github-actions-on|3.12|' \
+  'github-actions-on / Python 3.13 minor|github-actions-on|3.13|' \
+  'github-actions-on / Hatchling|github-actions-on||hatchling')"
 [[ "$generation_matrix" == "$expected_generation_matrix" ]] || {
   printf 'Expected generation matrix:\n%s\nActual generation matrix:\n%s\n' \
     "$expected_generation_matrix" \
@@ -358,6 +366,7 @@ expected_question_map="$(printf '%s\n' \
   visible:project_description \
   visible:main_branch_name \
   visible:python_version \
+  visible:build_backend \
   visible:license \
   visible:author_name \
   visible:use_github_actions \
@@ -377,7 +386,9 @@ expected_question_map="$(printf '%s\n' \
 printf 'ok -- wizard exposes only the supported choices\n'
 
 default_dir="${tmp_dir}/default"
-render_project_with_tasks "$default_dir"
+# author_name defaults to the machine's git or OS user name; the empty-author
+# contracts below need it pinned. The default itself is checked further down.
+render_project_with_tasks "$default_dir" --data author_name=
 
 for agent_doc in README.md AGENTS.md CLAUDE.md; do
   assert_path_absent "${default_dir}/${agent_doc}"
@@ -467,9 +478,13 @@ expected_rumdl_excludes="$(printf '%s\n' \
 printf 'ok -- rumdl targets root and documentation globs with explicit excludes\n'
 
 assert_matches "${default_dir}/pyproject.toml" '^\[build-system\]$'
-assert_not_matches \
+assert_contains "${default_dir}/pyproject.toml" 'build-backend = "uv_build"'
+assert_contains \
   "${default_dir}/pyproject.toml" \
-  '^\[tool\.hatch\.build\.targets\.wheel\]$'
+  "\"uv_build>=${template_uv_pin},<" \
+  "uv_build range must start at the uv pin ${template_uv_pin} in template/mise.toml.jinja"
+assert_contains "${default_dir}/pyproject.toml" 'module-name = "my_project"'
+assert_not_contains "${default_dir}/pyproject.toml" 'hatchling'
 assert_not_matches "${default_dir}/.pytest.ini" '^[[:space:]]*pythonpath[[:space:]]='
 assert_contains \
   "${default_dir}/pyproject.toml" \
@@ -651,6 +666,30 @@ assert_contains "${author_dir}/LICENSE" "Copyright (c) $(date +%Y) Ada Lovelace"
 assert_contains "${author_dir}/Dockerfile" 'LABEL maintainer="Ada Lovelace"'
 
 printf 'ok -- author metadata reaches MIT and Docker outputs\n'
+
+git_author_config="${tmp_dir}/gitconfig"
+git config --file "$git_author_config" user.name 'Git Author'
+git_author_dir="${tmp_dir}/git-author"
+GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL="$git_author_config" \
+  render_project "$git_author_dir"
+assert_contains "${git_author_dir}/.copier-answers.yml" 'author_name: Git Author'
+os_author_dir="${tmp_dir}/os-author"
+GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null \
+  render_project "$os_author_dir"
+assert_contains "${os_author_dir}/.copier-answers.yml" "author_name: $(id -un)"
+
+printf 'ok -- author_name defaults to the git user name, then the OS user\n'
+
+hatchling_dir="${tmp_dir}/hatchling"
+render_project "$hatchling_dir" --data build_backend=hatchling --data project_name=Acme_Project
+assert_contains "${hatchling_dir}/pyproject.toml" 'requires = ["hatchling"]'
+assert_contains "${hatchling_dir}/pyproject.toml" 'build-backend = "hatchling.build"'
+assert_not_contains "${hatchling_dir}/pyproject.toml" 'uv_build'
+assert_not_matches \
+  "${hatchling_dir}/pyproject.toml" \
+  '^\[tool\.(hatch|uv\.build-backend)'
+
+printf 'ok -- Hatchling stays available as the alternative build backend\n'
 
 python_310_dir="${tmp_dir}/python-3.10"
 render_project "$python_310_dir" --data python_version=3.10

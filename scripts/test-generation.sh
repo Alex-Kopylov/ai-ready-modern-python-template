@@ -3,20 +3,24 @@ set -euo pipefail
 
 usage() {
   printf \
-    'Usage: %s <github-actions-on|github-actions-off> [python-version]\n' \
+    'Usage: %s <github-actions-on|github-actions-off> [python-version] [uv_build|hatchling]\n' \
     "$0" >&2
 }
 
-if [[ $# -lt 1 || $# -gt 2 ]]; then
+if [[ $# -lt 1 || $# -gt 3 ]]; then
   usage
   exit 2
 fi
 
 scenario="$1"
 python_version_input="${2:-}"
+build_backend_input="${3:-}"
 copier_args=()
 if [[ -n "$python_version_input" ]]; then
   copier_args+=(--data "python_version=${python_version_input}")
+fi
+if [[ -n "$build_backend_input" ]]; then
+  copier_args+=(--data "build_backend=${build_backend_input}")
 fi
 case "$scenario" in
   github-actions-on)
@@ -168,6 +172,8 @@ git diff --quiet || {
 
 mise exec -- uv run python -c "import my_project"
 mise run verify
+ls dist/my_project-0.1.0-py3-none-any.whl dist/my_project-0.1.0.tar.gz >/dev/null ||
+  fail "uv build did not produce the wheel and sdist"
 
 if [[ "$scenario" == github-actions-on ]]; then
   for workflow_extension in yml yaml; do

@@ -25,8 +25,9 @@ When reviewing, interpret each file in the context of the layer it belongs to.
 
 ## Commands
 
-- `mise install`: install the root tool pins (copier, yamllint, actionlint,
-  zizmor, uv) that the scripts below run through `mise exec`.
+- `mise install`: install the root tool pins (copier with
+  copier-template-extensions, yamllint, actionlint, zizmor, uv) that the
+  scripts below run through `mise exec`.
 - `scripts/test-render-contracts.sh`: run fast render-only wizard and output
   contracts.
 - `scripts/test-generation.sh github-actions-on`: generate and gate the true
@@ -36,6 +37,9 @@ When reviewing, interpret each file in the context of the layer it belongs to.
 - `scripts/test-generation.sh github-actions-off 3.11.9`: run the full
   exact-patch fixture; the optional version argument is reusable for Python
   coverage scenarios.
+- `scripts/test-generation.sh github-actions-on "" hatchling`: generate and
+  gate the Hatchling build backend; the third argument is `uv_build` or
+  `hatchling`.
 
 Inside a generated project, the standard commands are:
 
@@ -50,7 +54,8 @@ Inside a generated project, the standard commands are:
 - `mise run test-cov`: run the pytest suite with a coverage report.
 - `mise run verify`: build, run the full lint gate, and run coverage tests.
 - `mise run install-hooks`: install prek-managed pre-commit and pre-push hooks.
-- `uv build`: build the installable distribution with Hatchling.
+- `uv build`: build the installable distribution with the chosen backend
+  (`uv_build` by default, Hatchling on request).
 
 ## Tooling
 
@@ -67,7 +72,8 @@ Inside a generated project, the standard commands are:
 
 ## Template Invariants
 
-- Every generated project is installable and buildable through Hatchling.
+- Every generated project is installable and buildable with `uv build`
+  through `build_backend`: `uv_build` (default) or Hatchling.
 - Docker, `.dockerignore`, Hadolint configuration, task, and hook are baseline.
 - `use_github_actions` is the only structural switch and controls the complete
   GitHub workflow, dependency automation, schema, and security bundle.
@@ -111,5 +117,5 @@ minor for new questions or features; patch for fixes. Once CI is green on
 `main`, tag and publish in one step with
 `gh release create vX.Y.Z --target <main-sha> --generate-notes`, then
 smoke-test
-`uvx copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template my-project` so
+`uvx --with copier-template-extensions copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template my-project` so
 the default Copier command resolves to the new stable version.

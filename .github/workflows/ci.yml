@@ -78,6 +78,10 @@ jobs:
           - label: github-actions-on / Python 3.13 minor
             scenario: github-actions-on
             python_version: "3.13"
+          - label: github-actions-on / Hatchling
+            scenario: github-actions-on
+            python_version: ""
+            build_backend: hatchling
     env:
       GITHUB_TOKEN: ${{ github.token }}
     steps:
@@ -95,3 +99,4 @@ jobs:
           scripts/test-generation.sh
           "${{ matrix.scenario }}"
           "${{ matrix.python_version }}"
+          "${{ matrix.build_backend }}"

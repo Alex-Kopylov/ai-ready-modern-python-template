@@ -2,16 +2,17 @@
 
 Copier template for universal, installable, framework-neutral Python projects.
 Every generated project includes `uv`, `mise`, strict lint gates, tests, hooks,
-Hatchling packaging, and a Docker baseline. GitHub automation is optional as one
+`uv_build` (or Hatchling) packaging, and a Docker baseline. GitHub automation is optional as one
 complete bundle.
 
 ## Generate a Project
 
 ```bash
-uvx copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template my-project
+uvx --with copier-template-extensions copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template my-project
 ```
 
-`--trust` lets Copier run the template's one task: it downloads the chosen
+`--with copier-template-extensions` loads the hook that defaults `author_name`
+to your git user name. `--trust` lets Copier run the template's one task: it downloads the chosen
 license text from the GitHub licenses API into `LICENSE`, so generation needs
 network access.
 
@@ -28,8 +29,9 @@ The wizard keeps project-shape choices small and explicit:
 | `project_description` | `Project description` | Package metadata |
 | `main_branch_name` | `main` | Git setup guidance and generated CI push branch |
 | `python_version` | `3.14` | Python, uv, Ruff, ty, and Docker |
+| `build_backend` | `uv_build` | `uv_build` (uv's own backend) or `hatchling` |
 | `license` | `MIT` | MIT (default), UNLICENSED, 27 other popular SPDX licenses, or Skip |
-| `author_name` | empty | License owner and optional Docker maintainer |
+| `author_name` | git user name, else OS user | License owner and optional Docker maintainer |
 | `use_github_actions` | `true` | Entire GitHub automation bundle |
 | `extra_linters` | all | jscpd, typos, rumdl, and commentwall |
 | `parallel_testing` | `true` | Run pytest in parallel with pytest-xdist |
@@ -86,7 +88,7 @@ when the project is first synced.
 From the generated project:
 
 ```bash
-uvx copier update --trust
+uvx --with copier-template-extensions copier update --trust
 ```
 
 Review the diff before committing. Copier uses `.copier-answers.yml` to replay
@@ -97,7 +99,7 @@ the original answers and merge template changes.
 From the existing project root:
 
 ```bash
-uvx copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template .
+uvx --with copier-template-extensions copier copy --trust gh:Alex-Kopylov/ai-ready-modern-python-template .
 git diff
 ```
 
